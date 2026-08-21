@@ -13,7 +13,7 @@ import {
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
-    ref: typeof search.ref === "string" ? search.ref : undefined,
+    ref: typeof search["ref"] === "string" ? (search["ref"] as string) : undefined,
   }),
   head: () => ({
     meta: [
@@ -155,7 +155,7 @@ function Hero({
   mounted,
   onJoin,
 }: {
-  refCode?: string;
+  refCode?: string | undefined;
   me: RankedEntry | null;
   total: number;
   mounted: boolean;
@@ -225,7 +225,7 @@ function JoinForm({
   refCode,
   onJoin,
 }: {
-  refCode?: string;
+  refCode?: string | undefined;
   onJoin: (e: RankedEntry) => void;
 }) {
   const [email, setEmail] = useState("");
@@ -520,7 +520,7 @@ function Footer() {
         </div>
         <div className="flex items-center justify-between border-t border-border pt-6 text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} Kudo</span>
-          <Link to="/admin" className="transition-colors hover:text-foreground">
+          <Link to="/admin" search={{}} className="transition-colors hover:text-foreground">
             Espace fondateur
           </Link>
         </div>

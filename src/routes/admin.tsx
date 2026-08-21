@@ -77,7 +77,7 @@ function Admin() {
           >
             Entrer
           </button>
-          <Link to="/" className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/" search={{}} className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
             Retour à la landing
           </Link>
         </form>
