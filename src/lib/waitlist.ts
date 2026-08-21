@@ -90,8 +90,7 @@ export function rank(entries: Entry[]): RankedEntry[] {
 }
 
 function makeCode(email: string, entries: Entry[]) {
-  const base = email
-    .split("@")[0]
+  const base = (email.split("@")[0] ?? "user")
     .replace(/[^a-zA-Z0-9]/g, "")
     .toUpperCase()
     .slice(0, 4)
