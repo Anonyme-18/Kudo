@@ -48,7 +48,7 @@ export function BlurText({ text, className = "", delay = 100 }: Props) {
                   opacity: [0, 0.5, 1],
                   y: [50, -5, 0],
                 }
-              : undefined
+              : { filter: "blur(10px)", opacity: 0, y: 50 }
           }
           transition={{
             duration: 0.7,
