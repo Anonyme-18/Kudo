@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Check, Copy, Sparkles } from "lucide-react";
-import heroGlow from "@/assets/hero-glow.jpg";
+import { motion } from "framer-motion";
+import { BlurText } from "@/components/BlurText";
+import { FadingVideo } from "@/components/FadingVideo";
+import heroFrame from "@/assets/hero-frame.jpg";
+import notesFrame from "@/assets/capabilities-frame.jpg";
+import heroLoop from "@/assets/hero-loop.mp4.asset.json";
+import notesLoop from "@/assets/notes-loop.mp4.asset.json";
 import {
   MAX_COUNTED_REFERRALS,
   POINTS_PER_REFERRAL,
@@ -110,6 +116,7 @@ function Landing() {
           refresh();
         }}
       />
+      <Capabilities />
       <Marquee />
       <Features />
       <Referral />
@@ -121,27 +128,43 @@ function Landing() {
 
 function Nav() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <span className="text-display text-2xl tracking-tight">
-          Kudo<span className="text-primary">.</span>
+    <header className="fixed inset-x-0 top-4 z-50 px-6 lg:px-14">
+      <div className="flex items-center justify-between">
+        <span className="liquid-glass text-display flex size-12 items-center justify-center rounded-full text-2xl italic">
+          k
         </span>
-        <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          <a href="#produit" className="transition-colors hover:text-foreground">
-            Le produit
+
+        <div className="hidden items-center gap-1 md:flex">
+          <nav className="liquid-glass flex items-center rounded-full p-1.5">
+            {[
+              { href: "#produit", label: "Le produit" },
+              { href: "#capacites", label: "Capacités" },
+              { href: "#parrainage", label: "Parrainage" },
+              { href: "#faq", label: "Questions" },
+            ].map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
+          <a
+            href="#rejoindre"
+            className="ml-2 inline-flex items-center gap-1 rounded-full bg-sand px-4 py-2.5 text-sm font-medium whitespace-nowrap text-ink"
+          >
+            Prendre ma place
+            <ArrowUpRight className="size-4" />
           </a>
-          <a href="#parrainage" className="transition-colors hover:text-foreground">
-            Parrainage
-          </a>
-          <a href="#faq" className="transition-colors hover:text-foreground">
-            Questions
-          </a>
-        </nav>
+        </div>
+
         <a
           href="#rejoindre"
-          className="rounded-full border border-border bg-card/60 px-4 py-2 text-sm backdrop-blur transition-colors hover:border-primary hover:text-primary"
+          className="liquid-glass rounded-full px-4 py-2.5 text-sm text-foreground md:hidden"
         >
-          Rejoindre la file
+          Rejoindre
         </a>
       </div>
     </header>
@@ -162,62 +185,184 @@ function Hero({
   onJoin: (e: RankedEntry) => void;
 }) {
   return (
-    <div id="rejoindre" className="relative isolate">
-      <img
-        src={heroGlow}
-        alt=""
-        aria-hidden
-        width={1600}
-        height={1008}
-        className="animate-drift pointer-events-none absolute inset-x-0 top-0 -z-10 h-[110vh] w-full object-cover opacity-60"
+    <div id="rejoindre" className="relative isolate min-h-screen overflow-hidden bg-ink">
+      <FadingVideo
+        src={heroLoop.url}
+        poster={heroFrame}
+        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-top"
+        style={{ width: "120%", height: "120%" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,transparent_35%,var(--background)_92%)]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_65%,transparent)_0%,transparent_35%,var(--background)_96%)]"
       />
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 pt-32 pb-20">
-        <div className="animate-rise inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs tracking-wide text-muted-foreground backdrop-blur">
-          <span className="animate-pulse-ring size-1.5 rounded-full bg-primary" />
-          Lancement 2026 · conçu à Lomé, Togo
+
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-32 pb-10">
+        <div className="flex flex-1 flex-col justify-center">
+          <motion.div
+            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            className="liquid-glass flex w-fit items-center gap-3 rounded-full pr-4"
+          >
+            <span className="rounded-full bg-sand px-3 py-1 text-xs font-semibold text-ink">
+              Bientôt
+            </span>
+            <span className="text-sm text-foreground/90">
+              Première promo Kudo · rentrée 2026, depuis Lomé
+            </span>
+          </motion.div>
+
+          <BlurText
+            text="Tes cours, enfin à ta hauteur."
+            className="text-display mt-7 max-w-3xl text-[clamp(3rem,9vw,6.5rem)] tracking-[-0.04em]"
+          />
+
+          <motion.p
+            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+            className="mt-6 max-w-xl text-base leading-relaxed font-light text-foreground/90"
+          >
+            Kudo transforme un amphi bruyant, un PDF flou ou un vocal WhatsApp en notes claires,
+            révisables et disponibles hors connexion. Pensé pour les campus africains, la data
+            chère et les nuits de révision.
+          </motion.p>
+
+          <motion.div
+            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
+            className="mt-9 max-w-xl"
+          >
+            {mounted && me ? (
+              <SpotCard entry={me} />
+            ) : (
+              <JoinForm refCode={refCode} onJoin={onJoin} />
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.3, ease: "easeOut" }}
+            className="mt-8 flex flex-wrap items-stretch gap-4"
+          >
+            {[
+              {
+                value: mounted ? total.toLocaleString("fr-FR") : "—",
+                label: "Étudiants déjà dans la file",
+              },
+              { value: "1 000", label: "Places gratuites à vie" },
+              { value: "< 4 Mo", label: "De data par heure de cours" },
+            ].map((s) => (
+              <div key={s.label} className="liquid-glass w-[210px] rounded-[1.25rem] p-5">
+                <p className="text-display text-4xl leading-none">{s.value}</p>
+                <p className="mt-2 text-xs font-light text-foreground/80">{s.label}</p>
+              </div>
+            ))}
+          </motion.div>
         </div>
 
-        <h1
-          className="text-display animate-rise mt-8 max-w-3xl text-[clamp(2.9rem,8vw,6.2rem)]"
-          style={{ animationDelay: "80ms" }}
+        <motion.div
+          initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+          animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.4, ease: "easeOut" }}
+          className="flex flex-col items-center gap-4 pt-14"
         >
-          Tes cours,{" "}
-          <span className="text-ember-gradient italic">enfin</span> à ta hauteur.
-        </h1>
-
-        <p
-          className="animate-rise mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground"
-          style={{ animationDelay: "160ms" }}
-        >
-          Kudo transforme un amphi bruyant, un PDF flou ou un vocal WhatsApp en notes claires,
-          révisables et disponibles hors connexion. Pensé pour les campus africains, la data chère
-          et les nuits de révision.
-        </p>
-
-        <div className="animate-rise mt-10 max-w-xl" style={{ animationDelay: "240ms" }}>
-          {mounted && me ? (
-            <SpotCard entry={me} />
-          ) : (
-            <JoinForm refCode={refCode} onJoin={onJoin} />
-          )}
-        </div>
-
-        <div
-          className="animate-rise mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-muted-foreground"
-          style={{ animationDelay: "320ms" }}
-        >
-          <span className="font-mono text-foreground">
-            {mounted ? total.toLocaleString("fr-FR") : "—"} étudiants déjà dans la file
+          <span className="liquid-glass rounded-full px-3.5 py-1 text-xs font-medium text-foreground">
+            Déjà testé sur ces campus
           </span>
-          <span>Gratuit pour les 1 000 premiers</span>
-          <span>Aucune carte bancaire</span>
-        </div>
+          <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 md:gap-x-16">
+            {["Lomé", "UCAD", "Unilag", "Legon", "UAC"].map((n) => (
+              <span key={n} className="text-display text-2xl italic md:text-3xl">
+                {n}
+              </span>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </div>
+  );
+}
+
+const CAPABILITIES = [
+  {
+    title: "Amphi capté",
+    tags: ["Bruit filtré", "Français & anglais", "Titres auto", "Hors ligne"],
+    body: "Enregistre le cours et récupère une transcription structurée : définitions, formules et questions d'examen probables.",
+  },
+  {
+    title: "PDF en fiches",
+    tags: ["Scan flou", "Photo WhatsApp", "Résumé", "Quiz"],
+    body: "Un polycopié photographié devient une fiche de révision propre, avec quiz généré pour t'auto-évaluer.",
+  },
+  {
+    title: "Data légère",
+    tags: ["Offline first", "Sync auto", "< 4 Mo/h", "Android d'abord"],
+    body: "Tout fonctionne sans connexion et se synchronise quand le réseau revient. Pensé pour les forfaits limités.",
+  },
+];
+
+function Capabilities() {
+  return (
+    <section id="capacites" className="relative isolate min-h-screen overflow-hidden bg-ink">
+      <FadingVideo
+        src={notesLoop.url}
+        poster={notesFrame}
+        className="absolute inset-0 z-0 h-full w-full object-cover"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,var(--background)_0%,transparent_22%,transparent_70%,var(--background)_100%)]"
+      />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-28 pb-16">
+        <div className="mb-auto">
+          <p className="mb-6 text-sm text-foreground/80">// Capacités</p>
+          <h2 className="text-display text-[clamp(3rem,8vw,6rem)] tracking-[-0.03em]">
+            Réviser,
+            <br />
+            <span className="italic">autrement.</span>
+          </h2>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {CAPABILITIES.map((c, i) => (
+            <motion.article
+              key={c.title}
+              initial={{ filter: "blur(10px)", opacity: 0, y: 30 }}
+              whileInView={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.7, delay: i * 0.12, ease: "easeOut" }}
+              className="liquid-glass flex min-h-[340px] flex-col rounded-[1.25rem] p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span className="liquid-glass flex size-11 items-center justify-center rounded-[0.75rem] font-mono text-sm text-primary">
+                  0{i + 1}
+                </span>
+                <div className="flex max-w-[70%] flex-wrap justify-end gap-1.5">
+                  {c.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="liquid-glass rounded-full px-3 py-1 text-[11px] whitespace-nowrap text-foreground/90"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1" />
+              <div className="mt-6">
+                <h3 className="text-display text-3xl md:text-4xl">{c.title}</h3>
+                <p className="mt-3 max-w-[32ch] text-sm leading-snug font-light text-foreground/90">
+                  {c.body}
+                </p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
