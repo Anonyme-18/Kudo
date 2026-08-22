@@ -61,6 +61,7 @@ export function FadingVideo({ src, poster, className = "", style }: Props) {
     };
 
     video.addEventListener("loadeddata", onLoaded);
+    video.addEventListener("canplay", onLoaded);
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("ended", onEnded);
     if (video.readyState >= 2) onLoaded();
@@ -68,6 +69,7 @@ export function FadingVideo({ src, poster, className = "", style }: Props) {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       video.removeEventListener("loadeddata", onLoaded);
+      video.removeEventListener("canplay", onLoaded);
       video.removeEventListener("timeupdate", onTimeUpdate);
       video.removeEventListener("ended", onEnded);
     };

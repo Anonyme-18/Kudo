@@ -186,6 +186,14 @@ function Hero({
 }) {
   return (
     <div id="rejoindre" className="relative isolate min-h-screen overflow-hidden bg-ink">
+      <img
+        src={heroFrame}
+        alt=""
+        aria-hidden
+        width={1920}
+        height={1088}
+        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-top"
+      />
       <FadingVideo
         src={heroLoop.url}
         poster={heroFrame}
@@ -307,6 +315,15 @@ const CAPABILITIES = [
 function Capabilities() {
   return (
     <section id="capacites" className="relative isolate min-h-screen overflow-hidden bg-ink">
+      <img
+        src={notesFrame}
+        alt=""
+        aria-hidden
+        loading="lazy"
+        width={1920}
+        height={1088}
+        className="absolute inset-0 z-0 h-full w-full object-cover"
+      />
       <FadingVideo
         src={notesLoop.url}
         poster={notesFrame}
