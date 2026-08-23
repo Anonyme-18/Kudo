@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
-import { useRef, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { useRef, type PointerEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -7,11 +7,6 @@ type ImmersiveCardProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
-};
-
-type SpotlightStyle = CSSProperties & {
-  "--card-x": string;
-  "--card-y": string;
 };
 
 export function ImmersiveCard({ children, className, delay = 0 }: ImmersiveCardProps) {
@@ -44,8 +39,8 @@ export function ImmersiveCard({ children, className, delay = 0 }: ImmersiveCardP
 
   return (
     <motion.div
-      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
-      whileInView={reduceMotion ? undefined : { opacity: 1, y: [28, -5, 0] }}
+      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+      whileInView={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: [28, -5, 0] }}
       viewport={{ once: true, amount: 0.18 }}
       transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
       className="h-full [perspective:1100px]"
@@ -54,13 +49,7 @@ export function ImmersiveCard({ children, className, delay = 0 }: ImmersiveCardP
         ref={cardRef}
         onPointerMove={handlePointerMove}
         onPointerLeave={resetTilt}
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-          "--card-x": "50%",
-          "--card-y": "50%",
-        } as SpotlightStyle}
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         className={cn("card-spotlight h-full will-change-transform", className)}
       >
         <div className="relative z-[1] h-full [transform:translateZ(18px)]">{children}</div>
