@@ -300,6 +300,88 @@
   );
 }
 
+@utility hero-spotlight {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(
+      520px circle at var(--mx, 50%) var(--my, 38%),
+      color-mix(in oklab, var(--ember) 20%, transparent),
+      transparent 68%
+    );
+    mix-blend-mode: screen;
+  }
+}
+
+@utility card-spotlight {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.45s var(--ease-silk);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      240px circle at var(--card-x, 50%) var(--card-y, 50%),
+      color-mix(in oklab, var(--ember) 22%, transparent),
+      transparent 68%
+    );
+    transition: opacity 0.35s ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+.hero-halo {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 42% 58% 63% 37% / 48% 35% 65% 52%;
+  background: color-mix(in oklab, var(--ember) 18%, transparent);
+  filter: blur(70px);
+  mix-blend-mode: screen;
+  animation: halo-breathe 14s ease-in-out infinite alternate;
+}
+
+.hero-halo-one {
+  width: min(46vw, 620px);
+  aspect-ratio: 1.3;
+  top: 8%;
+  right: -12%;
+}
+
+.hero-halo-two {
+  width: min(34vw, 460px);
+  aspect-ratio: 1;
+  bottom: 5%;
+  left: -10%;
+  background: color-mix(in oklab, var(--clay) 14%, transparent);
+  animation-delay: -7s;
+}
+
+@keyframes halo-breathe {
+  from {
+    transform: translate3d(-3%, 4%, 0) rotate(-5deg) scale(0.9);
+    opacity: 0.45;
+  }
+  to {
+    transform: translate3d(7%, -6%, 0) rotate(8deg) scale(1.16);
+    opacity: 0.85;
+  }
+}
+
 @utility shimmer-text {
   background: linear-gradient(
     100deg,

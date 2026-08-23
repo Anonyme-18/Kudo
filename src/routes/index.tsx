@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Check, Copy, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowUpRight, Check, Copy, Sparkles, UserPlus, Users } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { BlurText } from "@/components/BlurText";
 import { FadingVideo } from "@/components/FadingVideo";
+import { ImmersiveCard } from "@/components/ImmersiveCard";
+import { Button } from "@/components/ui/button";
 import heroFrame from "@/assets/hero-frame.jpg";
 import notesFrame from "@/assets/capabilities-frame.jpg";
 import heroLoop from "@/assets/hero-loop.mp4.asset.json";
@@ -184,8 +186,23 @@ function Hero({
   mounted: boolean;
   onJoin: (e: RankedEntry) => void;
 }) {
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const trackSpotlight = (event: React.PointerEvent<HTMLDivElement>) => {
+    const hero = heroRef.current;
+    if (!hero || event.pointerType === "touch") return;
+    const bounds = hero.getBoundingClientRect();
+    hero.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
+    hero.style.setProperty("--my", `${event.clientY - bounds.top}px`);
+  };
+
   return (
-    <div id="rejoindre" className="relative isolate min-h-screen overflow-hidden bg-ink">
+    <div
+      id="rejoindre"
+      ref={heroRef}
+      onPointerMove={trackSpotlight}
+      className="hero-spotlight relative isolate min-h-screen overflow-hidden bg-ink"
+    >
       <img
         src={heroFrame}
         alt=""
@@ -204,6 +221,8 @@ function Hero({
         aria-hidden
         className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_55%,transparent)_0%,transparent_30%,color-mix(in_oklab,var(--ink)_70%,transparent)_72%,var(--background)_98%)]"
       />
+      <div aria-hidden className="hero-halo hero-halo-one" />
+      <div aria-hidden className="hero-halo hero-halo-two" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-28 pb-8">
         <div className="flex flex-1 flex-col justify-center">
@@ -241,12 +260,15 @@ function Hero({
             initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
             animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
-            className="mt-7 max-w-xl"
+            className="mt-7 max-w-2xl"
           >
             {mounted && me ? (
               <SpotCard entry={me} />
             ) : (
-              <JoinForm refCode={refCode} onJoin={onJoin} />
+              <div className="space-y-4">
+                <ReferralDemo total={total} />
+                <JoinForm refCode={refCode} onJoin={onJoin} />
+              </div>
             )}
           </motion.div>
 
@@ -264,10 +286,13 @@ function Hero({
               { value: "1 000", label: "Places gratuites à vie" },
               { value: "< 4 Mo", label: "De data par heure de cours" },
             ].map((s) => (
-              <div key={s.label} className="liquid-glass w-[210px] rounded-[1.25rem] p-5">
+              <ImmersiveCard
+                key={s.label}
+                className="liquid-glass w-[210px] rounded-[1.25rem] p-5"
+              >
                 <p className="text-display text-4xl leading-none">{s.value}</p>
                 <p className="mt-2 text-xs font-light text-foreground/80">{s.label}</p>
-              </div>
+              </ImmersiveCard>
             ))}
           </motion.div>
         </div>
@@ -291,6 +316,78 @@ function Hero({
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function ReferralDemo({ total }: { total: number }) {
+  const [invites, setInvites] = useState(0);
+  const basePosition = Math.max(total || 742, 184);
+  const gains = [0, 12, 31, 58, 91, 137];
+  const position = Math.max(1, basePosition - (gains[invites] ?? 0));
+
+  return (
+    <ImmersiveCard className="liquid-glass-strong rounded-2xl p-4 sm:p-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-medium text-foreground/80">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Users className="size-3.5" />
+            </span>
+            Simule ta remontée
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-sm text-muted-foreground">Position</span>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.strong
+                key={position}
+                initial={{ y: 14, opacity: 0, filter: "blur(6px)" }}
+                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                exit={{ y: -14, opacity: 0, filter: "blur(6px)" }}
+                transition={{ duration: 0.28 }}
+                className="text-display text-4xl text-primary"
+              >
+                #{position}
+              </motion.strong>
+            </AnimatePresence>
+          </div>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {invites === 0 ? "Ajoute des camarades pour voir l’effet" : `${invites} invitation${invites > 1 ? "s" : ""} · +${invites * POINTS_PER_REFERRAL} pts`}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            aria-label="Retirer une invitation"
+            onClick={() => setInvites((value) => Math.max(0, value - 1))}
+            disabled={invites === 0}
+            className="rounded-full"
+          >
+            −
+          </Button>
+          <span className="w-6 text-center font-mono text-sm">{invites}</span>
+          <Button
+            type="button"
+            size="icon"
+            aria-label="Ajouter une invitation"
+            onClick={() => setInvites((value) => Math.min(5, value + 1))}
+            disabled={invites === 5}
+            className="rounded-full"
+          >
+            <UserPlus className="size-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-secondary">
+        <motion.div
+          className="h-full rounded-full bg-primary"
+          animate={{ width: `${(invites / 5) * 100}%` }}
+          transition={{ type: "spring", stiffness: 110, damping: 20 }}
+        />
+      </div>
+    </ImmersiveCard>
   );
 }
 
@@ -345,14 +442,12 @@ function Capabilities() {
 
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
           {CAPABILITIES.map((c, i) => (
-            <motion.article
+            <ImmersiveCard
               key={c.title}
-              initial={{ filter: "blur(10px)", opacity: 0, y: 30 }}
-              whileInView={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.7, delay: i * 0.12, ease: "easeOut" }}
-              className="liquid-glass flex min-h-[340px] flex-col rounded-[1.25rem] p-6"
+              delay={i * 0.12}
+              className="liquid-glass min-h-[340px] rounded-[1.25rem] p-6"
             >
+              <article className="flex h-full flex-col">
               <div className="flex items-start justify-between gap-4">
                 <span className="liquid-glass flex size-11 items-center justify-center rounded-[0.75rem] font-mono text-sm text-primary">
                   0{i + 1}
@@ -375,7 +470,8 @@ function Capabilities() {
                   {c.body}
                 </p>
               </div>
-            </motion.article>
+              </article>
+            </ImmersiveCard>
           ))}
         </div>
       </div>
@@ -544,15 +640,14 @@ function Features() {
         Trois gestes que tu fais déjà. En mieux.
       </h2>
       <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
-        {FEATURES.map((f) => (
-          <article
-            key={f.n}
-            className="group bg-background p-8 transition-colors duration-500 hover:bg-card"
-          >
-            <span className="font-mono text-xs text-primary">{f.n}</span>
-            <h3 className="text-display mt-6 text-2xl">{f.title}</h3>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
-          </article>
+        {FEATURES.map((f, i) => (
+          <ImmersiveCard key={f.n} delay={i * 0.1} className="bg-background p-8 transition-colors duration-500 hover:bg-card">
+            <article>
+              <span className="font-mono text-xs text-primary">{f.n}</span>
+              <h3 className="text-display mt-6 text-2xl">{f.title}</h3>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+            </article>
+          </ImmersiveCard>
         ))}
       </div>
     </Section>
@@ -581,7 +676,7 @@ function Referral() {
           </a>
         </div>
 
-        <ol className="space-y-px overflow-hidden rounded-2xl border border-border bg-border">
+        <ol className="grid gap-2">
           {[
             {
               t: "Tu prends ta place",
@@ -596,11 +691,13 @@ function Referral() {
               d: "Points décroissants, puis ancienneté d'inscription. Aucun auto-parrainage possible : ton propre lien ne compte jamais pour toi.",
             },
           ].map((s, i) => (
-            <li key={i} className="bg-background p-7">
-              <span className="font-mono text-xs text-primary">0{i + 1}</span>
-              <h3 className="mt-3 text-lg">{s.t}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
-            </li>
+            <ImmersiveCard key={i} delay={i * 0.1} className="surface-card rounded-xl p-7">
+              <li>
+                <span className="font-mono text-xs text-primary">0{i + 1}</span>
+                <h3 className="mt-3 text-lg">{s.t}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
+              </li>
+            </ImmersiveCard>
           ))}
         </ol>
       </div>
@@ -634,26 +731,29 @@ function Faq() {
       <h2 className="text-display text-[clamp(2rem,5vw,3.5rem)]">Questions honnêtes</h2>
       <div className="mt-12 border-t border-border">
         {FAQ.map((item, i) => (
-          <div key={i} className="border-b border-border">
-            <button
-              type="button"
-              onClick={() => setOpen(open === i ? null : i)}
-              className="flex w-full items-center justify-between gap-6 py-6 text-left transition-colors hover:text-primary"
-            >
-              <span className="text-lg">{item.q}</span>
-              <span className="font-mono text-primary">{open === i ? "−" : "+"}</span>
-            </button>
-            <div
-              className="grid transition-all duration-500 ease-out"
-              style={{ gridTemplateRows: open === i ? "1fr" : "0fr" }}
-            >
-              <div className="overflow-hidden">
-                <p className="max-w-2xl pb-6 text-sm leading-relaxed text-muted-foreground">
-                  {item.a}
-                </p>
+          <ImmersiveCard key={i} delay={i * 0.06} className="border-b border-border">
+            <div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(open === i ? null : i)}
+                className="h-auto w-full justify-between rounded-none px-0 py-6 text-left text-foreground hover:bg-transparent hover:text-primary"
+              >
+                <span className="whitespace-normal text-lg">{item.q}</span>
+                <span className="font-mono text-primary">{open === i ? "−" : "+"}</span>
+              </Button>
+              <div
+                className="grid transition-all duration-500 ease-out"
+                style={{ gridTemplateRows: open === i ? "1fr" : "0fr" }}
+              >
+                <div className="overflow-hidden">
+                  <p className="max-w-2xl pb-6 text-sm leading-relaxed text-muted-foreground">
+                    {item.a}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </ImmersiveCard>
         ))}
       </div>
     </Section>
