@@ -192,17 +192,17 @@ function Hero({
         aria-hidden
         width={1920}
         height={1088}
-        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-top"
+        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-center opacity-90"
       />
       <FadingVideo
         src={heroLoop.url}
         poster={heroFrame}
-        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-top"
+        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-center"
         style={{ width: "120%", height: "120%" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_65%,transparent)_0%,transparent_35%,var(--background)_96%)]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_55%,transparent)_0%,transparent_30%,color-mix(in_oklab,var(--ink)_70%,transparent)_72%,var(--background)_98%)]"
       />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-32 pb-10">
