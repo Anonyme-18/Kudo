@@ -192,20 +192,20 @@ function Hero({
         aria-hidden
         width={1920}
         height={1088}
-        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-top"
+        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-center opacity-90"
       />
       <FadingVideo
         src={heroLoop.url}
         poster={heroFrame}
-        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-top"
+        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-center"
         style={{ width: "120%", height: "120%" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_65%,transparent)_0%,transparent_35%,var(--background)_96%)]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_55%,transparent)_0%,transparent_30%,color-mix(in_oklab,var(--ink)_70%,transparent)_72%,var(--background)_98%)]"
       />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-32 pb-10">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-28 pb-8">
         <div className="flex flex-1 flex-col justify-center">
           <motion.div
             initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
@@ -223,14 +223,14 @@ function Hero({
 
           <BlurText
             text="Tes cours, enfin à ta hauteur."
-            className="text-display mt-7 max-w-3xl text-[clamp(3rem,9vw,6.5rem)] tracking-[-0.04em]"
+            className="text-display mt-7 max-w-3xl text-[clamp(2.6rem,7vw,5.4rem)] tracking-[-0.04em]"
           />
 
           <motion.p
             initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
             animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
-            className="mt-6 max-w-xl text-base leading-relaxed font-light text-foreground/90"
+            className="mt-5 max-w-xl text-base leading-relaxed font-light text-foreground/90"
           >
             Kudo transforme un amphi bruyant, un PDF flou ou un vocal WhatsApp en notes claires,
             révisables et disponibles hors connexion. Pensé pour les campus africains, la data
@@ -241,7 +241,7 @@ function Hero({
             initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
             animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
-            className="mt-9 max-w-xl"
+            className="mt-7 max-w-xl"
           >
             {mounted && me ? (
               <SpotCard entry={me} />
@@ -254,7 +254,7 @@ function Hero({
             initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
             animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.3, ease: "easeOut" }}
-            className="mt-8 flex flex-wrap items-stretch gap-4"
+            className="mt-6 flex flex-wrap items-stretch gap-4"
           >
             {[
               {
@@ -276,7 +276,7 @@ function Hero({
           initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
           animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.4, ease: "easeOut" }}
-          className="flex flex-col items-center gap-4 pt-14"
+          className="flex flex-col items-center gap-4 pt-10"
         >
           <span className="liquid-glass rounded-full px-3.5 py-1 text-xs font-medium text-foreground">
             Déjà testé sur ces campus
