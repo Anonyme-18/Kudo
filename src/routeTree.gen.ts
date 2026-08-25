@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ClassementRouteImport } from './routes/classement'
 import { Route as ParrainageRouteImport } from './routes/parrainage'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassementRoute = ClassementRouteImport.update({
+  id: '/classement',
+  path: '/classement',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ParrainageRoute = ParrainageRouteImport.update({
   id: '/parrainage',
   path: '/parrainage',
@@ -32,30 +38,34 @@ const ParrainageRoute = ParrainageRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/classement': typeof ClassementRoute
   '/parrainage': typeof ParrainageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/classement': typeof ClassementRoute
   '/parrainage': typeof ParrainageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/classement': typeof ClassementRoute
   '/parrainage': typeof ParrainageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/parrainage'
+  fullPaths: '/' | '/admin' | '/classement' | '/parrainage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/parrainage'
-  id: '__root__' | '/' | '/admin' | '/parrainage'
+  to: '/' | '/admin' | '/classement' | '/parrainage'
+  id: '__root__' | '/' | '/admin' | '/classement' | '/parrainage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  ClassementRoute: typeof ClassementRoute
   ParrainageRoute: typeof ParrainageRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classement': {
+      id: '/classement'
+      path: '/classement'
+      fullPath: '/classement'
+      preLoaderRoute: typeof ClassementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/parrainage': {
       id: '/parrainage'
       path: '/parrainage'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  ClassementRoute: ClassementRoute,
   ParrainageRoute: ParrainageRoute,
 }
 export const routeTree = rootRouteImport
