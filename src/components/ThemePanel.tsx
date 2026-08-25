@@ -24,6 +24,10 @@ export function ThemePanel() {
     setState(loaded);
     applyTheme(loaded);
     setReady(true);
+    // Active les transitions douces une fois le thème initial appliqué.
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add("theme-ready");
+    });
   }, []);
 
   useEffect(() => {
