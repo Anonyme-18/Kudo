@@ -141,7 +141,6 @@ function Nav() {
             {[
               { href: "#produit", label: "Le produit" },
               { href: "#capacites", label: "Capacités" },
-              { href: "#parrainage", label: "Parrainage" },
               { href: "#faq", label: "Questions" },
             ].map((l) => (
               <a
@@ -152,7 +151,20 @@ function Nav() {
                 {l.label}
               </a>
             ))}
+            <Link
+              to="/parrainage"
+              className="rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
+            >
+              Parrainage
+            </Link>
+            <Link
+              to="/classement"
+              className="rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
+            >
+              Classement
+            </Link>
           </nav>
+
           <a
             href="#rejoindre"
             className="ml-2 inline-flex items-center gap-1 rounded-full bg-sand px-4 py-2.5 text-sm font-medium whitespace-nowrap text-ink"
