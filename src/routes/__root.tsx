@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getThemeInlineScript } from "../lib/theme-script";
 import { ThemePanel } from "../components/ThemePanel";
 
 function NotFoundComponent() {
@@ -113,6 +114,8 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Applique le thème sauvegardé avant le premier paint pour éviter le flash. */}
+        <script dangerouslySetInnerHTML={{ __html: getThemeInlineScript() }} />
       </head>
       <body>
         {children}
