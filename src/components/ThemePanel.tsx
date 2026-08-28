@@ -127,18 +127,6 @@ export function ThemePanel() {
               ))}
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <label className="text-xs tracking-widest text-muted-foreground uppercase">
-                Accent
-              </label>
-              <input
-                type="color"
-                value={state.ember ?? "#e8a33d"}
-                onChange={(e) => update({ ember: e.target.value })}
-                aria-label="Couleur d'accent"
-                className="h-9 w-16 cursor-pointer rounded-lg border border-border bg-transparent"
-              />
-            </div>
 
             <div className="mt-4">
               <label className="text-xs tracking-widest text-muted-foreground uppercase">
