@@ -43,20 +43,6 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
   },
   {
-    id: "harmattan",
-    label: "Harmattan",
-    hint: "Sable clair, encre chaude",
-    swatch: ["#f2ece1", "#b4531f", "#7c5c3e"],
-    vars: {
-      background: "oklch(0.95 0.014 85)",
-      foreground: "oklch(0.22 0.02 60)",
-      card: "oklch(0.98 0.008 85)",
-      ember: "oklch(0.58 0.16 45)",
-      clay: "oklch(0.52 0.09 60)",
-      sand: "oklch(0.32 0.02 60)",
-    },
-  },
-  {
     id: "lagune",
     label: "Lagune",
     hint: "Nuit bleue, néon menthe",
@@ -98,12 +84,6 @@ export const FONT_PRESETS: FontPreset[] = [
     label: "Moderne",
     display: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif',
     sans: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif',
-  },
-  {
-    id: "campus",
-    label: "Campus",
-    display: '"Bebas Neue", Impact, sans-serif',
-    sans: '"Manrope", ui-sans-serif, system-ui, sans-serif',
   },
   {
     id: "litteraire",
