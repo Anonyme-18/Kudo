@@ -1,7 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+"use client";
+
+import { createFileRoute } from "@tanstack/react-router";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Lock } from "lucide-react";
-import { rank, readAll, toCsv, type RankedEntry } from "@/lib/waitlist";
+import { Download, Lock, Loader2 } from "lucide-react";
+import { getRankedEntries, verifyAdmin, type RankedEntry } from "@/lib/actions";
+import { toCsv } from "@/lib/waitlist";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -17,12 +21,12 @@ export const Route = createFileRoute("/admin")({
 });
 
 const SESSION_KEY = "kudo.admin.session";
-const DEMO_PASSWORD = "kudo-lome";
 
-function Admin() {
+export default function Admin() {
   const [authed, setAuthed] = useState(false);
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<RankedEntry[]>([]);
 
   useEffect(() => {
@@ -30,7 +34,13 @@ function Admin() {
   }, []);
 
   useEffect(() => {
-    if (authed) setRows(rank(readAll()));
+    if (authed) {
+      setLoading(true);
+      getRankedEntries().then(data => {
+        setRows(data);
+        setLoading(false);
+      });
+    }
   }, [authed]);
 
   const stats = useMemo(
@@ -46,19 +56,24 @@ function Admin() {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (pwd === DEMO_PASSWORD) {
+            setLoading(true);
+            const isValid = await verifyAdmin(pwd);
+            if (isValid) {
               sessionStorage.setItem(SESSION_KEY, "ok");
               setAuthed(true);
-            } else setError(true);
+            } else {
+              setError(true);
+            }
+            setLoading(false);
           }}
           className="surface-card animate-rise w-full max-w-sm rounded-2xl p-8"
         >
           <Lock className="size-5 text-primary" />
           <h1 className="text-display mt-5 text-3xl">Espace fondateur</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Zone privée. Mot de passe de démonstration : <code className="font-mono">kudo-lome</code>
+            Zone privée. Accès réservé à l'équipe Kudo.
           </p>
           <input
             type="password"
@@ -73,11 +88,13 @@ function Admin() {
           {error && <p className="mt-2 text-sm text-destructive">Mot de passe incorrect.</p>}
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground"
+            disabled={loading}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
+            {loading && <Loader2 className="size-4 animate-spin" />}
             Entrer
           </button>
-          <Link to="/" search={{ ref: undefined }} className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
+          <Link href="/" className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
             Retour à la landing
           </Link>
         </form>
@@ -86,7 +103,9 @@ function Admin() {
   }
 
   const exportCsv = () => {
-    const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
+    // toCsv needs RankedEntry from lib/waitlist which has slight type difference (Date vs number), 
+    // but the properties we use are compatible.
+    const blob = new Blob([toCsv(rows as any)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

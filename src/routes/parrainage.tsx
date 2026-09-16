@@ -1,19 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+"use client";
+
+import { createFileRoute } from "@tanstack/react-router";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Copy, Share2, Sparkles, Trophy, Users } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 import { ImmersiveCard } from "@/components/ImmersiveCard";
 import { Button } from "@/components/ui/button";
-import {
-  MAX_COUNTED_REFERRALS,
-  POINTS_PER_REFERRAL,
-  join,
-  loadMe,
-  rank,
-  readAll,
-  type RankedEntry,
-} from "@/lib/waitlist";
+import { getRankedEntries, joinWaitlist, type RankedEntry } from "@/lib/actions";
+import { POINTS_PER_REFERRAL, MAX_COUNTED_REFERRALS } from "@/lib/constants";
 
 export const Route = createFileRoute("/parrainage")({
   head: () => ({
@@ -36,17 +32,28 @@ export const Route = createFileRoute("/parrainage")({
   component: ParrainagePage,
 });
 
-function ParrainagePage() {
+export default function ParrainagePage() {
   const [me, setMe] = useState<RankedEntry | null>(null);
   const [total, setTotal] = useState(0);
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    setMe(loadMe());
-    setTotal(readAll().length);
+  const refresh = useCallback(async () => {
+    const data = await getRankedEntries();
+    setTotal(data.length);
+    const myCode = localStorage.getItem("kudo.waitlist.me");
+    if (myCode) {
+      setMe(data.find(r => r.code === myCode) || null);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const link = useMemo(() => {
     if (!me) return "";
@@ -137,7 +144,7 @@ function ParrainagePage() {
                     Partager sur WhatsApp
                   </a>
                   <Link
-                    to="/classement"
+                    href="/classement"
                     className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs transition-colors hover:border-primary hover:text-primary"
                   >
                     <Trophy className="size-3.5" />
@@ -149,7 +156,7 @@ function ParrainagePage() {
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Progression vers le palier max</span>
                     <span className="font-mono">
-                      {me.countedReferrals}/{MAX_COUNTED_REFERRALS}
+                      {me.countedReferrals}/10
                     </span>
                   </div>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
@@ -158,7 +165,7 @@ function ParrainagePage() {
                       style={{ background: "var(--gradient-ember)" }}
                       initial={{ width: 0 }}
                       animate={{
-                        width: `${(me.countedReferrals / MAX_COUNTED_REFERRALS) * 100}%`,
+                        width: `${(me.countedReferrals / 10) * 100}%`,
                       }}
                       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     />
@@ -172,18 +179,13 @@ function ParrainagePage() {
                 <p className="text-xs tracking-widest text-muted-foreground uppercase">
                   Prochain objectif
                 </p>
-                {nextTarget ? (
+                {me.position > 1 ? (
                   <>
                     <p className="text-display mt-3 text-3xl">
-                      Doubler la place #{nextTarget.position}
+                      Doubler la place #{me.position - 1}
                     </p>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      Il te manque{" "}
-                      <span className="text-foreground">
-                        {Math.max(1, Math.ceil((nextTarget.points - me.points + 1) / POINTS_PER_REFERRAL))}{" "}
-                        filleul(s)
-                      </span>{" "}
-                      pour passer devant. Chaque inscription validée avec ton lien est prise en
+                      Invite tes camarades pour remonter dans la file. Chaque inscription validée avec ton lien est prise en
                       compte immédiatement.
                     </p>
                   </>
@@ -215,17 +217,19 @@ function ParrainagePage() {
           </div>
         ) : (
           <form
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              const value = email.trim();
-              if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
-                setError("Entre une adresse email valide.");
-                return;
-              }
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setJoining(true);
               setError(null);
-              const res = join(value, null);
-              setMe(res.entry);
-              setTotal(readAll().length);
+              const refCode = new URLSearchParams(window.location.search).get("ref");
+              const res = await joinWaitlist(email, refCode);
+              if (res.success) {
+                localStorage.setItem("kudo.waitlist.me", res.code);
+                refresh();
+              } else {
+                setError("Erreur lors de l'inscription.");
+              }
+              setJoining(false);
             }}
             className="surface-card mt-10 flex max-w-xl flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
           >
@@ -237,8 +241,8 @@ function ParrainagePage() {
               aria-label="Adresse email"
               className="w-full flex-1 bg-transparent px-4 py-3 outline-none placeholder:text-muted-foreground"
             />
-            <Button type="submit" className="rounded-xl px-6 py-6 sm:py-3">
-              Générer mon lien
+            <Button type="submit" disabled={joining} className="rounded-xl px-6 py-6 sm:py-3">
+              {joining ? "Chargement..." : "Générer mon lien"}
             </Button>
           </form>
         )}
@@ -276,15 +280,14 @@ function PageNav() {
   return (
     <div className="flex items-center justify-between">
       <Link
-        to="/"
-        search={{ ref: undefined }}
+        href="/"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Retour à l'accueil
       </Link>
       <Link
-        to="/classement"
+        href="/classement"
         className="rounded-full border border-border px-4 py-2 text-sm transition-colors hover:border-primary hover:text-primary"
       >
         Classement

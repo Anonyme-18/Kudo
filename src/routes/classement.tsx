@@ -1,17 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+"use client";
+
+import { createFileRoute } from "@tanstack/react-router";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Crown, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ImmersiveCard } from "@/components/ImmersiveCard";
-import {
-  MAX_COUNTED_REFERRALS,
-  POINTS_PER_REFERRAL,
-  loadMe,
-  rank,
-  readAll,
-  type RankedEntry,
-} from "@/lib/waitlist";
+import { getRankedEntries, type RankedEntry } from "@/lib/actions";
 
 export const Route = createFileRoute("/classement")({
   head: () => ({
@@ -40,14 +36,21 @@ function maskEmail(email: string) {
   return `${head}${"•".repeat(Math.max(2, user.length - 2))}@${domain}`;
 }
 
-function ClassementPage() {
+export default function ClassementPage() {
   const [rows, setRows] = useState<RankedEntry[]>([]);
   const [me, setMe] = useState<RankedEntry | null>(null);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    setRows(rank(readAll()));
-    setMe(loadMe());
+    getRankedEntries().then(data => {
+      setRows(data);
+      const myCode = localStorage.getItem("kudo.waitlist.me");
+      if (myCode) {
+        setMe(data.find(r => r.code === myCode) || null);
+      }
+      setLoading(false);
+    });
   }, []);
 
   const filtered = useMemo(() => {
@@ -68,15 +71,14 @@ function ClassementPage() {
       <div className="relative mx-auto w-full max-w-5xl px-6 py-16">
         <div className="flex items-center justify-between">
           <Link
-            to="/"
-            search={{ ref: undefined }}
+            href="/"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
             Retour à l'accueil
           </Link>
           <Link
-            to="/parrainage"
+            href="/parrainage"
             className="rounded-full border border-border px-4 py-2 text-sm transition-colors hover:border-primary hover:text-primary"
           >
             Mon parrainage
@@ -125,7 +127,7 @@ function ClassementPage() {
               </p>
             </div>
             <Link
-              to="/parrainage"
+              href="/parrainage"
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
             >
               Gagner des places

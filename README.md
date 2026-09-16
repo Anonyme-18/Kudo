@@ -1,46 +1,43 @@
-# **Study Flow**
+# Kudo 🎓
 
-Un fondateur togolais développe une application de prise de notes pensée pour les étudiants africains. Avant le lancement, il veut une landing page qui capte des emails, avec un système de parrainage : plus on invite de monde, plus on avance dans la file d'attente.
+Kudo est une plateforme de prise de notes intelligente, conçue spécifiquement pour répondre aux défis des étudiants sur les campus africains : connexions internet instables, coût élevé de la data, et besoin d'efficacité maximale lors des révisions.
 
-Livrer une landing page publique avec inscription à la liste d'attente, un mécanisme de parrainage qui fait progresser la position dans la file, et un tableau de bord administrateur permettant de consulter et exporter la liste complète.
+## 🚀 Fonctionnalités clés
 
-  Chaque inscrit doit recevoir un lien de parrainage unique à partager.
+- **Transcription Intelligente** : Enregistrez vos cours, obtenez des transcriptions structurées avec définitions et points clés, même dans un environnement bruyant.
+- **Conversion de documents** : Transformez vos photos de polycopiés ou scans de faible qualité en fiches de révision lisibles et structurées.
+- **Mode Hors-ligne (Offline First)** : L'application est pensée pour fonctionner sans connexion, avec une synchronisation automatique dès que le réseau est disponible.
+- **Optimisation Data** : Consommation ultra-faible (< 4 Mo/h), parfaitement adaptée aux forfaits limités.
 
-•  Rien n'est précisé sur le nombre de places gagnées par filleul, ni sur une éventuelle limite.
+## 🛠️ Stack Technique
 
-•  Le fondateur veut pouvoir exporter la liste des inscrits triée par position.
+Ce projet utilise des technologies modernes pour garantir performance, type-safety et expérience développeur :
 
-•  Rien n'est précisé sur ce qui doit arriver si quelqu'un s'inscrit deux fois avec la même adresse.
+- **Framework** : [Next.js](https://nextjs.org/) (App Router) pour le routage et le rendu optimisé.
+- **Routing** : [TanStack Router](https://tanstack.com/router/latest) pour une gestion de routage type-safe.
+- **Base de données** : [PostgreSQL](https://www.postgresql.org/) avec [Neon](https://neon.tech/) pour le stockage, via [Drizzle ORM](https://orm.drizzle.team/).
+- **Styling** : [Tailwind CSS v4](https://tailwindcss.com/) pour un design flexible et moderne.
+- **Animations** : [Framer Motion](https://www.framer.com/motion/) pour des interfaces fluides et immersives.
 
+## 📦 Installation & Démarrage
 
-•  La position dans la file doit être recalculée de façon exacte et vérifiable à chaque nouveau parrainage validé.
+1. Clonez le dépôt et installez les dépendances :
+   ```bash
+   npm install
+   ```
+2. Configurez vos variables d'environnement (copiez `.env.example` en `.env.local`) :
+   ```bash
+   cp .env.example .env.local
+   ```
+   Remplissez les valeurs nécessaires :
+   - `DATABASE_URL` : Votre chaîne de connexion Neon PostgreSQL.
+   - `ADMIN_PASSWORD` : Le mot de passe sécurisé pour l'espace fondateur.
 
-•  Un inscrit ne doit jamais pouvoir se parrainer lui-même pour avancer artificiellement dans la file.
+3. Lancez le serveur de développement :
+   ```bash
+   npm run dev
+   ```
 
-•  Le tableau de bord administrateur doit être protégé par une authentification, inaccessible publiquement.
+## 🚀 Déploiement
 
-Je m'attends à ce que tu fasse unique le front dans la landing page, pas de backend. 9a doit être une landing de dingue , ps un truc générique des ia. 
-Comme inspiration : site-pandore.vercel.app
-Il y'a de bon composant et animation. 
-Tout ce qui vient sur la landing page doivent avoir envie de s'incrire, le choix entre les couleurs , la typo , l'ux sont très important et décisifs
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d45e1346-e5bd-40c2-a7a4-b1439a7f7669).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+Le projet est configuré pour un déploiement fluide sur [Vercel](https://vercel.com/). Assurez-vous d'ajouter `DATABASE_URL` et `ADMIN_PASSWORD` dans les **Environment Variables** des paramètres de votre projet sur le tableau de bord Vercel avant le premier déploiement.

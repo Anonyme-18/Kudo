@@ -1,23 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Check, Copy, Sparkles, UserPlus, Users } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { BlurText } from "@/components/BlurText";
-import { FadingVideo } from "@/components/FadingVideo";
-import { ImmersiveCard } from "@/components/ImmersiveCard";
-import { Button } from "@/components/ui/button";
-import heroFrame from "@/assets/hero-frame.jpg";
-import notesFrame from "@/assets/capabilities-frame.jpg";
-import heroLoop from "@/assets/hero-loop.mp4.asset.json";
-import notesLoop from "@/assets/notes-loop.mp4.asset.json";
-import {
-  MAX_COUNTED_REFERRALS,
-  POINTS_PER_REFERRAL,
-  join,
-  loadMe,
-  readAll,
-  type RankedEntry,
-} from "@/lib/waitlist";
+"use client";
+
+import { createFileRoute } from "@tanstack/react-router";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Hero } from "@/components/landing/Hero";
+import { Capabilities } from "@/components/landing/Capabilities";
+import { Marquee, Features, Referral } from "@/components/landing/FeaturesSection";
+import { Faq, Footer } from "@/components/landing/FaqFooter";
+import { getRankedEntries, type RankedEntry } from "@/lib/actions";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -37,96 +27,13 @@ export const Route = createFileRoute("/")({
         content:
           "Liste d'attente ouverte. Chaque camarade invité te fait gagner des places dans la file.",
       },
+      { property: "og:image", content: "/og-image.png" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
 });
-
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e?.isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return { ref, shown };
-}
-
-function Section({
-  children,
-  className = "",
-  id,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  id?: string;
-}) {
-  const { ref, shown } = useReveal();
-  return (
-    <section
-      id={id}
-      ref={ref}
-      className={`mx-auto w-full max-w-6xl px-6 transition-all duration-1000 ease-out ${
-        shown ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-      } ${className}`}
-    >
-      {children}
-    </section>
-  );
-}
-
-function Landing() {
-  const { ref: refCode } = Route.useSearch();
-  const [me, setMe] = useState<RankedEntry | null>(null);
-  const [total, setTotal] = useState(0);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setMe(loadMe());
-    setTotal(readAll().length);
-  }, []);
-
-  const refresh = () => {
-    setMe(loadMe());
-    setTotal(readAll().length);
-  };
-
-  return (
-    <main className="relative min-h-screen overflow-x-hidden">
-      <Nav />
-      <Hero
-        refCode={refCode}
-        me={me}
-        total={total}
-        mounted={mounted}
-        onJoin={(e) => {
-          setMe(e);
-          refresh();
-        }}
-      />
-      <Capabilities />
-      <Marquee />
-      <Features />
-      <Referral />
-      <Faq />
-      <Footer />
-    </main>
-  );
-}
 
 function Nav() {
   return (
@@ -135,7 +42,6 @@ function Nav() {
         <span className="liquid-glass text-display flex size-12 items-center justify-center rounded-full text-2xl italic">
           k
         </span>
-
         <div className="hidden items-center gap-1 md:flex">
           <nav className="liquid-glass flex items-center rounded-full p-1.5">
             {[
@@ -152,28 +58,25 @@ function Nav() {
               </a>
             ))}
             <Link
-              to="/parrainage"
+              href="/parrainage"
               className="rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
             >
               Parrainage
             </Link>
             <Link
-              to="/classement"
+              href="/classement"
               className="rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
             >
               Classement
             </Link>
           </nav>
-
           <a
             href="#rejoindre"
             className="ml-2 inline-flex items-center gap-1 rounded-full bg-sand px-4 py-2.5 text-sm font-medium whitespace-nowrap text-ink"
           >
             Prendre ma place
-            <ArrowUpRight className="size-4" />
           </a>
         </div>
-
         <a
           href="#rejoindre"
           className="liquid-glass rounded-full px-4 py-2.5 text-sm text-foreground md:hidden"
@@ -185,689 +88,41 @@ function Nav() {
   );
 }
 
-function Hero({
-  refCode,
-  me,
-  total,
-  mounted,
-  onJoin,
-}: {
-  refCode?: string | undefined;
-  me: RankedEntry | null;
-  total: number;
-  mounted: boolean;
-  onJoin: (e: RankedEntry) => void;
-}) {
-  const heroRef = useRef<HTMLDivElement>(null);
+export default function Landing() {
+  const [refCode, setRefCode] = useState<string | undefined>(undefined);
+  const [me, setMe] = useState<RankedEntry | null>(null);
+  const [entries, setEntries] = useState<RankedEntry[]>([]);
+  const [mounted, setMounted] = useState(false);
 
-  const trackSpotlight = (event: React.PointerEvent<HTMLDivElement>) => {
-    const hero = heroRef.current;
-    if (!hero || event.pointerType === "touch") return;
-    const bounds = hero.getBoundingClientRect();
-    hero.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
-    hero.style.setProperty("--my", `${event.clientY - bounds.top}px`);
-  };
+  useEffect(() => {
+    setMounted(true);
+    setRefCode(new URLSearchParams(window.location.search).get("ref") ?? undefined);
+    getRankedEntries().then(data => {
+        setEntries(data);
+        // Note: For full fix, need a way to identify 'me' from DB, 
+        // likely via cookie/localstorage code
+    });
+  }, []);
 
   return (
-    <div
-      id="rejoindre"
-      ref={heroRef}
-      onPointerMove={trackSpotlight}
-      className="hero-spotlight relative isolate min-h-screen overflow-hidden bg-ink"
-    >
-      <img
-        src={heroFrame}
-        alt=""
-        aria-hidden
-        width={1920}
-        height={1088}
-        className="absolute top-0 left-1/2 z-0 h-[120%] w-[120%] max-w-none -translate-x-1/2 object-cover object-center opacity-90"
+    <main className="relative min-h-screen overflow-x-hidden">
+      <Nav />
+      <Hero
+        refCode={refCode}
+        me={me}
+        total={entries.length}
+        mounted={mounted}
+        onJoin={(e) => {
+          // Refresh data
+          getRankedEntries().then(setEntries);
+        }}
       />
-      <FadingVideo
-        src={heroLoop.url}
-        poster={heroFrame}
-        className="absolute top-0 left-1/2 z-0 -translate-x-1/2 object-cover object-center"
-        style={{ width: "120%", height: "120%" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ink)_55%,transparent)_0%,transparent_30%,color-mix(in_oklab,var(--ink)_70%,transparent)_72%,var(--background)_98%)]"
-      />
-      <div aria-hidden className="hero-halo hero-halo-one" />
-      <div aria-hidden className="hero-halo hero-halo-two" />
-
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-28 pb-8">
-        <div className="flex flex-1 flex-col justify-center">
-          <motion.div
-            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
-            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="liquid-glass flex w-fit items-center gap-3 rounded-full pr-4"
-          >
-            <span className="rounded-full bg-sand px-3 py-1 text-xs font-semibold text-ink">
-              Bientôt
-            </span>
-            <span className="text-sm text-foreground/90">
-              Première promo Kudo · rentrée 2026, depuis Lomé
-            </span>
-          </motion.div>
-
-          <BlurText
-            text="Tes cours, enfin à ta hauteur."
-            className="text-display mt-7 max-w-3xl text-[clamp(2.6rem,7vw,5.4rem)] tracking-[-0.04em]"
-          />
-
-          <motion.p
-            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
-            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
-            className="mt-5 max-w-xl text-base leading-relaxed font-light text-foreground/90"
-          >
-            Kudo transforme un amphi bruyant, un PDF flou ou un vocal WhatsApp en notes claires,
-            révisables et disponibles hors connexion. Pensé pour les campus africains, la data
-            chère et les nuits de révision.
-          </motion.p>
-
-          <motion.div
-            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
-            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
-            className="mt-7 max-w-2xl"
-          >
-            {mounted && me ? (
-              <SpotCard entry={me} />
-            ) : (
-              <div className="space-y-4">
-                <ReferralDemo total={total} />
-                <JoinForm refCode={refCode} onJoin={onJoin} />
-              </div>
-            )}
-          </motion.div>
-
-          <motion.div
-            initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
-            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.3, ease: "easeOut" }}
-            className="mt-6 flex flex-wrap items-stretch gap-4"
-          >
-            {[
-              {
-                value: mounted ? total.toLocaleString("fr-FR") : "—",
-                label: "Étudiants déjà dans la file",
-              },
-              { value: "1 000", label: "Places gratuites à vie" },
-              { value: "< 4 Mo", label: "De data par heure de cours" },
-            ].map((s) => (
-              <ImmersiveCard
-                key={s.label}
-                className="liquid-glass w-[210px] rounded-[1.25rem] p-5"
-              >
-                <p className="text-display text-4xl leading-none">{s.value}</p>
-                <p className="mt-2 text-xs font-light text-foreground/80">{s.label}</p>
-              </ImmersiveCard>
-            ))}
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
-          animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.4, ease: "easeOut" }}
-          className="flex flex-col items-center gap-4 pt-10"
-        >
-          <span className="liquid-glass rounded-full px-3.5 py-1 text-xs font-medium text-foreground">
-            Déjà testé sur ces campus
-          </span>
-          <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 md:gap-x-16">
-            {["Lomé", "UCAD", "Unilag", "Legon", "UAC"].map((n) => (
-              <span key={n} className="text-display text-2xl italic md:text-3xl">
-                {n}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-function ReferralDemo({ total }: { total: number }) {
-  const [invites, setInvites] = useState(0);
-  const basePosition = Math.max(total || 742, 184);
-  const gains = [0, 12, 31, 58, 91, 137];
-  const position = Math.max(1, basePosition - (gains[invites] ?? 0));
-
-  return (
-    <ImmersiveCard className="liquid-glass-strong rounded-2xl p-4 sm:p-5">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-medium text-foreground/80">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Users className="size-3.5" />
-            </span>
-            Simule ta remontée
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-sm text-muted-foreground">Position</span>
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.strong
-                key={position}
-                initial={{ y: 14, opacity: 0, filter: "blur(6px)" }}
-                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                exit={{ y: -14, opacity: 0, filter: "blur(6px)" }}
-                transition={{ duration: 0.28 }}
-                className="text-display text-4xl text-primary"
-              >
-                #{position}
-              </motion.strong>
-            </AnimatePresence>
-          </div>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
-            {invites === 0 ? "Ajoute des camarades pour voir l’effet" : `${invites} invitation${invites > 1 ? "s" : ""} · +${invites * POINTS_PER_REFERRAL} pts`}
-          </p>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            type="button"
-            size="icon"
-            variant="secondary"
-            aria-label="Retirer une invitation"
-            onClick={() => setInvites((value) => Math.max(0, value - 1))}
-            disabled={invites === 0}
-            className="rounded-full"
-          >
-            −
-          </Button>
-          <span className="w-6 text-center font-mono text-sm">{invites}</span>
-          <Button
-            type="button"
-            size="icon"
-            aria-label="Ajouter une invitation"
-            onClick={() => setInvites((value) => Math.min(5, value + 1))}
-            disabled={invites === 5}
-            className="rounded-full"
-          >
-            <UserPlus className="size-4" />
-          </Button>
-        </div>
-      </div>
-      <div className="mt-4 h-1 overflow-hidden rounded-full bg-secondary">
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          animate={{ width: `${(invites / 5) * 100}%` }}
-          transition={{ type: "spring", stiffness: 110, damping: 20 }}
-        />
-      </div>
-    </ImmersiveCard>
-  );
-}
-
-const CAPABILITIES = [
-  {
-    title: "Amphi capté",
-    tags: ["Bruit filtré", "Français & anglais", "Titres auto", "Hors ligne"],
-    body: "Enregistre le cours et récupère une transcription structurée : définitions, formules et questions d'examen probables.",
-  },
-  {
-    title: "PDF en fiches",
-    tags: ["Scan flou", "Photo WhatsApp", "Résumé", "Quiz"],
-    body: "Un polycopié photographié devient une fiche de révision propre, avec quiz généré pour t'auto-évaluer.",
-  },
-  {
-    title: "Data légère",
-    tags: ["Offline first", "Sync auto", "< 4 Mo/h", "Android d'abord"],
-    body: "Tout fonctionne sans connexion et se synchronise quand le réseau revient. Pensé pour les forfaits limités.",
-  },
-];
-
-function Capabilities() {
-  return (
-    <section id="capacites" className="relative isolate min-h-screen overflow-hidden bg-ink">
-      <img
-        src={notesFrame}
-        alt=""
-        aria-hidden
-        loading="lazy"
-        width={1920}
-        height={1088}
-        className="absolute inset-0 z-0 h-full w-full object-cover"
-      />
-      <FadingVideo
-        src={notesLoop.url}
-        poster={notesFrame}
-        className="absolute inset-0 z-0 h-full w-full object-cover"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,var(--background)_0%,transparent_22%,transparent_70%,var(--background)_100%)]"
-      />
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 pt-28 pb-16">
-        <div className="mb-auto">
-          <p className="mb-6 text-sm text-foreground/80">// Capacités</p>
-          <h2 className="text-display text-[clamp(3rem,8vw,6rem)] tracking-[-0.03em]">
-            Réviser,
-            <br />
-            <span className="italic">autrement.</span>
-          </h2>
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {CAPABILITIES.map((c, i) => (
-            <ImmersiveCard
-              key={c.title}
-              delay={i * 0.12}
-              className="liquid-glass min-h-[340px] rounded-[1.25rem] p-6"
-            >
-              <article className="flex h-full flex-col">
-              <div className="flex items-start justify-between gap-4">
-                <span className="liquid-glass flex size-11 items-center justify-center rounded-[0.75rem] font-mono text-sm text-primary">
-                  0{i + 1}
-                </span>
-                <div className="flex max-w-[70%] flex-wrap justify-end gap-1.5">
-                  {c.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="liquid-glass rounded-full px-3 py-1 text-[11px] whitespace-nowrap text-foreground/90"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-1" />
-              <div className="mt-6">
-                <h3 className="text-display text-3xl md:text-4xl">{c.title}</h3>
-                <p className="mt-3 max-w-[32ch] text-sm leading-snug font-light text-foreground/90">
-                  {c.body}
-                </p>
-              </div>
-              </article>
-            </ImmersiveCard>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function JoinForm({
-  refCode,
-  onJoin,
-}: {
-  refCode?: string | undefined;
-  onJoin: (e: RankedEntry) => void;
-}) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form
-      onSubmit={(ev) => {
-        ev.preventDefault();
-        const value = email.trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
-          setError("Entre une adresse email valide.");
-          return;
-        }
-        setError(null);
-        const res = join(value, refCode);
-        onJoin(res.entry);
-      }}
-      className="surface-card flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
-    >
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="ton.email@universite.tg"
-        aria-label="Adresse email"
-        className="w-full flex-1 bg-transparent px-4 py-3 text-base outline-none placeholder:text-muted-foreground"
-      />
-      <button
-        type="submit"
-        className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5"
-        style={{ boxShadow: "var(--shadow-lift)" }}
-      >
-        Prendre ma place
-        <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-      </button>
-      {error && (
-        <p className="px-4 pb-2 text-sm text-destructive sm:absolute sm:mt-24">{error}</p>
-      )}
-    </form>
-  );
-}
-
-function SpotCard({ entry }: { entry: RankedEntry }) {
-  const [copied, setCopied] = useState(false);
-  const link = useMemo(() => {
-    if (typeof window === "undefined") return `?ref=${entry.code}`;
-    return `${window.location.origin}/?ref=${entry.code}`;
-  }, [entry.code]);
-
-  const remaining = Math.max(0, MAX_COUNTED_REFERRALS - entry.referrals);
-
-  return (
-    <div className="surface-card animate-rise rounded-2xl p-6">
-      <div className="flex items-end justify-between gap-6">
-        <div>
-          <p className="text-xs tracking-widest text-muted-foreground uppercase">Ta position</p>
-          <p className="text-display mt-1 text-6xl">
-            <span className="text-muted-foreground">#</span>
-            {entry.position}
-          </p>
-        </div>
-        <div className="text-right text-sm">
-          <p className="font-mono text-primary">{entry.points} pts</p>
-          <p className="text-muted-foreground">
-            {entry.referrals} filleul{entry.referrals > 1 ? "s" : ""}
-          </p>
-        </div>
-      </div>
-
-      <p className="mt-5 text-sm text-muted-foreground">
-        Partage ton lien : chaque inscription validée te rapporte{" "}
-        <span className="text-foreground">{POINTS_PER_REFERRAL} points</span> et te fait remonter
-        la file. {remaining > 0 ? `${remaining} filleuls encore comptabilisés.` : "Palier maximum atteint, bravo."}
-      </p>
-
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-background/40 p-2">
-        <span className="flex-1 truncate px-2 font-mono text-xs text-muted-foreground">{link}</span>
-        <button
-          type="button"
-          onClick={() => {
-            void navigator.clipboard.writeText(link);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1800);
-          }}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
-        >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          {copied ? "Copié" : "Copier"}
-        </button>
-      </div>
-
-      <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-secondary">
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${(entry.countedReferrals / MAX_COUNTED_REFERRALS) * 100}%`,
-            background: "var(--gradient-ember)",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-const CAMPUS = [
-  "Université de Lomé",
-  "UCAD Dakar",
-  "Unilag",
-  "Université d'Abomey-Calavi",
-  "University of Ghana",
-  "Université Mohammed V",
-  "Makerere",
-  "Université Félix Houphouët-Boigny",
-];
-
-function Marquee() {
-  return (
-    <div className="relative overflow-hidden border-y border-border py-5">
-      <div className="animate-marquee flex w-max gap-12 pr-12">
-        {[...CAMPUS, ...CAMPUS].map((c, i) => (
-          <span key={i} className="text-sm whitespace-nowrap text-muted-foreground">
-            {c}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const FEATURES = [
-  {
-    n: "01",
-    title: "Le cours, capté même dans le bruit",
-    body: "Enregistre l'amphi et récupère une transcription structurée en titres, définitions et questions d'examen probables.",
-  },
-  {
-    n: "02",
-    title: "Tes PDF deviennent des fiches",
-    body: "Photo d'un polycopié, scan flou, capture WhatsApp : Kudo en extrait l'essentiel et génère des fiches de révision.",
-  },
-  {
-    n: "03",
-    title: "Hors ligne d'abord, data légère",
-    body: "Tout fonctionne sans connexion et se synchronise quand le réseau revient. Moins de 4 Mo par heure de cours.",
-  },
-];
-
-function Features() {
-  return (
-    <Section id="produit" className="py-28">
-      <p className="text-xs tracking-[0.3em] text-primary uppercase">Le produit</p>
-      <h2 className="text-display mt-5 max-w-2xl text-[clamp(2rem,5vw,3.5rem)]">
-        Trois gestes que tu fais déjà. En mieux.
-      </h2>
-      <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
-        {FEATURES.map((f, i) => (
-          <ImmersiveCard key={f.n} delay={i * 0.1} className="bg-background p-8 transition-colors duration-500 hover:bg-card">
-            <article>
-              <span className="font-mono text-xs text-primary">{f.n}</span>
-              <h3 className="text-display mt-6 text-2xl">{f.title}</h3>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
-            </article>
-          </ImmersiveCard>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-function Referral() {
-  return (
-    <Section id="parrainage" className="py-28">
-      <div className="grid gap-16 md:grid-cols-2 md:items-center">
-        <div>
-          <p className="text-xs tracking-[0.3em] text-primary uppercase">Parrainage</p>
-          <h2 className="text-display mt-5 text-[clamp(2rem,5vw,3.5rem)]">
-            La file avance <span className="italic">plus vite</span> à plusieurs.
-          </h2>
-          <p className="mt-6 max-w-md leading-relaxed text-muted-foreground">
-            Tu reçois un lien unique dès ton inscription. Chaque camarade qui s'inscrit avec ton
-            lien te fait gagner des places, immédiatement et de façon vérifiable.
-          </p>
-          <a
-            href="#rejoindre"
-            className="mt-8 inline-flex items-center gap-2 text-sm text-primary transition-colors hover:text-accent"
-          >
-            <Sparkles className="size-4" />
-            Obtenir mon lien
-          </a>
-        </div>
-
-        <ol className="grid gap-2">
-          {[
-            {
-              t: "Tu prends ta place",
-              d: "Un email suffit. Ton lien de parrainage unique est généré aussitôt.",
-            },
-            {
-              t: `Chaque filleul = ${POINTS_PER_REFERRAL} points`,
-              d: `Jusqu'à ${MAX_COUNTED_REFERRALS} filleuls comptabilisés, soit ${POINTS_PER_REFERRAL * MAX_COUNTED_REFERRALS} points maximum.`,
-            },
-            {
-              t: "Classement recalculé à chaque validation",
-              d: "Points décroissants, puis ancienneté d'inscription. Aucun auto-parrainage possible : ton propre lien ne compte jamais pour toi.",
-            },
-          ].map((s, i) => (
-            <ImmersiveCard key={i} delay={i * 0.1} className="surface-card rounded-xl p-7">
-              <li>
-                <span className="font-mono text-xs text-primary">0{i + 1}</span>
-                <h3 className="mt-3 text-lg">{s.t}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
-              </li>
-            </ImmersiveCard>
-          ))}
-        </ol>
-      </div>
-    </Section>
-  );
-}
-
-const FAQ: { cat: string; q: string; a: string }[] = [
-  {
-    cat: "Inscription",
-    q: "Que se passe-t-il si je m'inscris deux fois avec le même email ?",
-    a: "Rien de perdu, et rien de dupliqué : une adresse email correspond à une seule place. Si tu la ressaisis, on retrouve simplement ton entrée existante et on te réaffiche ta position, tes points et ton lien de parrainage. Ton ancienneté d'inscription reste celle de la première fois — te réinscrire ne te fait donc jamais reculer, mais ne te fait pas avancer non plus.",
-  },
-  {
-    cat: "Inscription",
-    q: "Combien de places sont vraiment disponibles ?",
-    a: "1 000 places gratuites à vie pour la première promo, ouvertes dans l'ordre de la file au lancement de la rentrée 2026. Au-delà de la 1000e place, tu restes dans la file et tu accèdes à Kudo par vagues successives — sauf si le parrainage te fait remonter dans les 1 000 premiers d'ici là. Aucune place n'est réservée ni vendue : la seule façon d'avancer, c'est d'inviter.",
-  },
-  {
-    cat: "Classement",
-    q: "Comment ma position évolue-t-elle exactement ?",
-    a: `Chaque filleul validé te rapporte ${POINTS_PER_REFERRAL} points, jusqu'à ${MAX_COUNTED_REFERRALS} filleuls comptabilisés (soit ${POINTS_PER_REFERRAL * MAX_COUNTED_REFERRALS} points maximum). Le classement est ensuite recalculé intégralement, à chaque nouvelle inscription : d'abord par points décroissants, puis, à égalité de points, par ancienneté d'inscription croissante. Concrètement, tu ne « perds » jamais de points : tu peux reculer uniquement si quelqu'un d'autre invite plus que toi.`,
-  },
-  {
-    cat: "Classement",
-    q: "Puis-je utiliser mon propre lien pour remonter ?",
-    a: "Non, et c'est volontaire. Un auto-parrainage — même email ou même code — est détecté et purement ignoré dans le calcul. Les doublons d'email ne créant pas de nouvelle entrée, gonfler artificiellement son score est impossible. Le classement reste vérifiable par tout le monde sur la page classement.",
-  },
-  {
-    cat: "Classement",
-    q: "Mes filleuls doivent-ils faire quelque chose pour que ça compte ?",
-    a: "Juste s'inscrire depuis ton lien avec une adresse email valide qui n'est pas déjà dans la file. Le point est crédité immédiatement, sans validation manuelle ni délai. Si la personne était déjà inscrite avant, elle garde sa place d'origine et le parrainage n'est pas comptabilisé.",
-  },
-  {
-    cat: "Produit",
-    q: "Kudo fonctionne-t-il sans connexion ?",
-    a: "Oui. Les notes, transcriptions et fiches sont stockées sur ton téléphone et la synchronisation se fait quand le réseau revient. Compte moins de 4 Mo de data par heure de cours.",
-  },
-  {
-    cat: "Données",
-    q: "Que faites-vous de mon email ?",
-    a: "Il sert uniquement à te prévenir de l'ouverture de ta place et à tenir la file. Pas de revente, pas de newsletter subie, et tu peux demander sa suppression à tout moment avant le lancement.",
-  },
-];
-
-function Faq() {
-  const [open, setOpen] = useState<number | null>(0);
-  return (
-    <Section id="faq" className="py-28">
-      <p className="text-xs tracking-[0.3em] text-primary uppercase">Questions</p>
-      <h2 className="text-display mt-5 max-w-2xl text-[clamp(2rem,5vw,3.5rem)]">
-        Les réponses avant les <span className="italic">hésitations</span>.
-      </h2>
-
-      <div className="mt-12 border-t border-border">
-        {FAQ.map((item, i) => {
-          const isOpen = open === i;
-          return (
-            <div key={item.q} className="border-b border-border">
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : i)}
-                className="group flex w-full items-center gap-5 py-6 text-left"
-              >
-                <span className="hidden w-28 shrink-0 font-mono text-[11px] tracking-widest text-primary uppercase sm:block">
-                  {item.cat}
-                </span>
-                <span className="flex-1 text-lg transition-colors group-hover:text-primary">
-                  {item.q}
-                </span>
-                <motion.span
-                  animate={{ rotate: isOpen ? 135 : 0 }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-primary"
-                >
-                  +
-                </motion.span>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    key="content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <motion.p
-                      initial={{ y: 10, filter: "blur(6px)" }}
-                      animate={{ y: 0, filter: "blur(0px)" }}
-                      exit={{ y: 6, filter: "blur(4px)" }}
-                      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                      className="max-w-2xl pb-7 text-sm leading-relaxed text-muted-foreground sm:pl-33"
-                    >
-                      {item.a}
-                    </motion.p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="surface-card mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-6">
-        <p className="text-sm text-muted-foreground">
-          Encore un doute ? Regarde la file bouger en direct avant de t'inscrire.
-        </p>
-        <div className="flex gap-2">
-          <Link
-            to="/classement"
-            className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-primary hover:text-primary"
-          >
-            Voir le classement
-          </Link>
-          <a
-            href="#rejoindre"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
-          >
-            Prendre ma place
-          </a>
-        </div>
-      </div>
-    </Section>
-  );
-}
-
-
-function Footer() {
-  return (
-    <footer className="mt-10 border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-14">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="text-display text-4xl">
-              Kudo<span className="text-primary">.</span>
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Fait à Lomé, pour les campus du continent.
-            </p>
-          </div>
-          <a
-            href="#rejoindre"
-            className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
-          >
-            Rejoindre la liste d'attente
-          </a>
-        </div>
-        <div className="flex items-center justify-between border-t border-border pt-6 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Kudo</span>
-          <Link to="/admin" search={{}} className="transition-colors hover:text-foreground">
-            Espace fondateur
-          </Link>
-        </div>
-      </div>
-    </footer>
+      <Capabilities />
+      <Marquee />
+      <Features />
+      <Referral />
+      <Faq />
+      <Footer />
+    </main>
   );
 }
