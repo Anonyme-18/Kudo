@@ -1,11 +1,23 @@
 "use server";
 
+import { createHmac, timingSafeEqual, randomInt } from "node:crypto";
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+
 import { db } from "./db";
 import { waitlist } from "./db/schema";
-import { eq, sql, desc, asc } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { MAX_COUNTED_REFERRALS, POINTS_PER_REFERRAL } from "./constants";
 
-import { POINTS_PER_REFERRAL, MAX_COUNTED_REFERRALS } from "./constants";
+const emailSchema = z.string().trim().toLowerCase().email().max(254);
+const codeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]{6}$/);
+const ADMIN_COOKIE = "kudo_admin_session";
+const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 export type RankedEntry = {
   id: string;
@@ -19,65 +31,85 @@ export type RankedEntry = {
   position: number;
 };
 
-export async function getRankedEntries(): Promise<RankedEntry[]> {
-  const entries = await db.select().from(waitlist);
-  
-  const counts = new Map<string, number>();
-  for (const e of entries) {
-    if (!e.referredBy) continue;
-    counts.set(e.referredBy, (counts.get(e.referredBy) ?? 0) + 1);
-  }
+export type PublicRankedEntry = Omit<RankedEntry, "email"> & { maskedEmail: string };
 
-  const ranked = entries.map((e) => {
-    const referrals = counts.get(e.code) ?? 0;
-    const countedReferrals = Math.min(referrals, MAX_COUNTED_REFERRALS);
-    return {
-      ...e,
-      referrals,
-      countedReferrals,
-      points: countedReferrals * POINTS_PER_REFERRAL,
-      position: 0,
-    };
-  });
-
-  return ranked
-    .sort((a, b) => b.points - a.points || a.joinedAt.getTime() - b.joinedAt.getTime())
-    .map((e, i) => ({ ...e, position: i + 1 }));
+function maskEmail(email: string) {
+  const [user = "", domain = ""] = email.split("@");
+  const visible = user.slice(0, 2);
+  return `${visible}${"•".repeat(Math.max(2, user.length - visible.length))}@${domain}`;
 }
 
-export async function joinWaitlist(email: string, refCode?: string | null) {
-  const normalizedEmail = email.trim().toLowerCase();
-  
-  // Check if already exists
-  const existing = await db.query.waitlist.findFirst({
-    where: eq(waitlist.email, normalizedEmail),
-  });
-
-  if (existing) {
-    return { success: true, code: existing.code, alreadyRegistered: true };
+function rankEntries(entries: (typeof waitlist.$inferSelect)[]): RankedEntry[] {
+  const counts = new Map<string, number>();
+  for (const entry of entries) {
+    if (entry.referredBy) counts.set(entry.referredBy, (counts.get(entry.referredBy) ?? 0) + 1);
   }
+  return entries
+    .map((entry) => {
+      const referrals = counts.get(entry.code) ?? 0;
+      const countedReferrals = Math.min(referrals, MAX_COUNTED_REFERRALS);
+      return {
+        ...entry,
+        referrals,
+        countedReferrals,
+        points: countedReferrals * POINTS_PER_REFERRAL,
+        position: 0,
+      };
+    })
+    .sort((a, b) => b.points - a.points || a.joinedAt.getTime() - b.joinedAt.getTime())
+    .map((entry, index) => ({ ...entry, position: index + 1 }));
+}
 
-  let sponsor = null;
-  if (refCode) {
-    sponsor = await db.query.waitlist.findFirst({
-      where: eq(waitlist.code, refCode.toUpperCase()),
+export async function getRankedEntries(): Promise<PublicRankedEntry[]> {
+  const rows = rankEntries(await db.select().from(waitlist));
+  return rows.map(({ email, ...entry }) => ({ ...entry, maskedEmail: maskEmail(email) }));
+}
+
+async function isAdminSessionValid() {
+  const value = (await cookies()).get(ADMIN_COOKIE)?.value;
+  if (!value) return false;
+  const [expires, signature] = value.split(".");
+  const secret = process.env["ADMIN_PASSWORD"];
+  if (!secret || !expires || !signature || Number(expires) < Math.floor(Date.now() / 1000))
+    return false;
+  const expected = createHmac("sha256", secret).update(expires).digest("hex");
+  return (
+    signature.length === expected.length &&
+    timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  );
+}
+
+export async function getAdminRankedEntries(): Promise<RankedEntry[]> {
+  if (!(await isAdminSessionValid())) throw new Error("Unauthorized");
+  return rankEntries(await db.select().from(waitlist));
+}
+
+export async function joinWaitlist(emailInput: string, refCodeInput?: string | null) {
+  const email = emailSchema.parse(emailInput);
+  const refCode = refCodeInput ? codeSchema.parse(refCodeInput) : null;
+  const existing = await db.query.waitlist.findFirst({ where: eq(waitlist.email, email) });
+  if (existing)
+    return { success: true as const, code: existing.code, alreadyRegistered: true as const };
+  const sponsor = refCode
+    ? await db.query.waitlist.findFirst({ where: eq(waitlist.code, refCode) })
+    : null;
+  const code = await generateUniqueCode(email);
+  try {
+    await db.insert(waitlist).values({
+      email,
+      code,
+      referredBy: sponsor && sponsor.email !== email ? sponsor.code : null,
     });
+  } catch (error) {
+    const concurrent = await db.query.waitlist.findFirst({ where: eq(waitlist.email, email) });
+    if (!concurrent) throw error;
+    return { success: true as const, code: concurrent.code, alreadyRegistered: true as const };
   }
-
-  const code = await generateUniqueCode(normalizedEmail);
-
-  await db.insert(waitlist).values({
-    email: normalizedEmail,
-    code,
-    referredBy: sponsor && sponsor.email !== normalizedEmail ? sponsor.code : null,
-  });
-
   revalidatePath("/");
   revalidatePath("/classement");
   revalidatePath("/parrainage");
   revalidatePath("/admin");
-
-  return { success: true, code, alreadyRegistered: false };
+  return { success: true as const, code, alreadyRegistered: false as const };
 }
 
 async function generateUniqueCode(email: string) {
@@ -86,23 +118,33 @@ async function generateUniqueCode(email: string) {
     .toUpperCase()
     .slice(0, 4)
     .padEnd(4, "X");
-  
-  let code = "";
-  let isUnique = false;
-  while (!isUnique) {
-    code = base + Math.floor(10 + Math.random() * 89);
-    const existing = await db.query.waitlist.findFirst({
-      where: eq(waitlist.code, code),
-    });
-    if (!existing) isUnique = true;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const code = `${base}${randomInt(10, 100)}`;
+    if (!(await db.query.waitlist.findFirst({ where: eq(waitlist.code, code) }))) return code;
   }
-  return code;
+  throw new Error("Unable to generate a unique referral code");
 }
 
-export async function verifyAdmin(password: string) {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) {
-    throw new Error("ADMIN_PASSWORD environment variable is not set");
-  }
-  return password === adminPassword;
+export async function verifyAdmin(passwordInput: string) {
+  const password = z.string().min(1).max(256).parse(passwordInput);
+  const secret = process.env["ADMIN_PASSWORD"];
+  if (!secret) throw new Error("ADMIN_PASSWORD is not configured");
+  const provided = Buffer.from(password);
+  const expected = Buffer.from(secret);
+  const valid = provided.length === expected.length && timingSafeEqual(provided, expected);
+  if (!valid) return false;
+  const expires = String(Math.floor(Date.now() / 1000) + ADMIN_SESSION_TTL_SECONDS);
+  const signature = createHmac("sha256", secret).update(expires).digest("hex");
+  (await cookies()).set(ADMIN_COOKIE, `${expires}.${signature}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: ADMIN_SESSION_TTL_SECONDS,
+  });
+  return true;
+}
+
+export async function logoutAdmin() {
+  (await cookies()).delete(ADMIN_COOKIE);
 }

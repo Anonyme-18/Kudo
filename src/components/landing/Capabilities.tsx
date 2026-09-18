@@ -63,28 +63,28 @@ export function Capabilities() {
               className="liquid-glass min-h-[340px] rounded-[1.25rem] p-6"
             >
               <article className="flex h-full flex-col">
-              <div className="flex items-start justify-between gap-4">
-                <span className="liquid-glass flex size-11 items-center justify-center rounded-[0.75rem] font-mono text-sm text-primary">
-                  0{i + 1}
-                </span>
-                <div className="flex max-w-[70%] flex-wrap justify-end gap-1.5">
-                  {c.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="liquid-glass rounded-full px-3 py-1 text-[11px] whitespace-nowrap text-foreground/90"
-                    >
-                      {t}
-                    </span>
-                  ))}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="liquid-glass flex size-11 items-center justify-center rounded-[0.75rem] font-mono text-sm text-primary">
+                    0{i + 1}
+                  </span>
+                  <div className="flex max-w-[70%] flex-wrap justify-end gap-1.5">
+                    {c.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="liquid-glass rounded-full px-3 py-1 text-[11px] whitespace-nowrap text-foreground/90"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1" />
-              <div className="mt-6">
-                <h3 className="text-display text-3xl md:text-4xl">{c.title}</h3>
-                <p className="mt-3 max-w-[32ch] text-sm leading-snug font-light text-foreground/90">
-                  {c.body}
-                </p>
-              </div>
+                <div className="flex-1" />
+                <div className="mt-6">
+                  <h3 className="text-display text-3xl md:text-4xl">{c.title}</h3>
+                  <p className="mt-3 max-w-[32ch] text-sm leading-snug font-light text-foreground/90">
+                    {c.body}
+                  </p>
+                </div>
               </article>
             </ImmersiveCard>
           ))}

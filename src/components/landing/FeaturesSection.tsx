@@ -1,7 +1,6 @@
 import { ImmersiveCard } from "@/components/ImmersiveCard";
-import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { POINTS_PER_REFERRAL, MAX_COUNTED_REFERRALS } from "@/lib/waitlist";
+import { POINTS_PER_REFERRAL, MAX_COUNTED_REFERRALS } from "@/lib/constants";
 
 const CAMPUS = [
   "Université de Lomé",
@@ -55,7 +54,11 @@ export function Features() {
       </h2>
       <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
         {FEATURES.map((f, i) => (
-          <ImmersiveCard key={f.n} delay={i * 0.1} className="bg-background p-8 transition-colors duration-500 hover:bg-card">
+          <ImmersiveCard
+            key={f.n}
+            delay={i * 0.1}
+            className="bg-background p-8 transition-colors duration-500 hover:bg-card"
+          >
             <article>
               <span className="font-mono text-xs text-primary">{f.n}</span>
               <h3 className="text-display mt-6 text-2xl">{f.title}</h3>

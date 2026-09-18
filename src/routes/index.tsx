@@ -7,9 +7,9 @@ import { Hero } from "@/components/landing/Hero";
 import { Capabilities } from "@/components/landing/Capabilities";
 import { Marquee, Features, Referral } from "@/components/landing/FeaturesSection";
 import { Faq, Footer } from "@/components/landing/FaqFooter";
-import { getRankedEntries, type RankedEntry } from "@/lib/actions";
+import { getRankedEntries, type PublicRankedEntry } from "@/lib/actions";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute()({
   validateSearch: (search: Record<string, unknown>) => ({
     ref: typeof search["ref"] === "string" ? (search["ref"] as string) : undefined,
   }),
@@ -90,17 +90,17 @@ function Nav() {
 
 export default function Landing() {
   const [refCode, setRefCode] = useState<string | undefined>(undefined);
-  const [me, setMe] = useState<RankedEntry | null>(null);
-  const [entries, setEntries] = useState<RankedEntry[]>([]);
+  const [me, setMe] = useState<PublicRankedEntry | null>(null);
+  const [entries, setEntries] = useState<PublicRankedEntry[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setRefCode(new URLSearchParams(window.location.search).get("ref") ?? undefined);
-    getRankedEntries().then(data => {
-        setEntries(data);
-        // Note: For full fix, need a way to identify 'me' from DB, 
-        // likely via cookie/localstorage code
+    getRankedEntries().then((data) => {
+      setEntries(data);
+      const myCode = localStorage.getItem("kudo.waitlist.me");
+      setMe(myCode ? (data.find((entry) => entry.code === myCode) ?? null) : null);
     });
   }, []);
 

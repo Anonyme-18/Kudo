@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { BlurText } from "@/components/BlurText";
 import { FadingVideo } from "@/components/FadingVideo";
 import { ImmersiveCard } from "@/components/ImmersiveCard";
-import { type RankedEntry } from "@/lib/waitlist";
+import { type PublicRankedEntry } from "@/lib/actions";
 import heroFrame from "@/assets/hero-frame.jpg";
 import heroLoop from "@/assets/hero-loop.mp4.asset.json";
 import { useRef } from "react";
@@ -19,10 +19,10 @@ export function Hero({
   onJoin,
 }: {
   refCode?: string | undefined;
-  me: RankedEntry | null;
+  me: PublicRankedEntry | null;
   total: number;
   mounted: boolean;
-  onJoin: (e: RankedEntry) => void;
+  onJoin: (e: PublicRankedEntry) => void;
 }) {
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -90,8 +90,8 @@ export function Hero({
             className="mt-5 max-w-xl text-base leading-relaxed font-light text-foreground/90"
           >
             Kudo transforme un amphi bruyant, un PDF flou ou un vocal WhatsApp en notes claires,
-            révisables et disponibles hors connexion. Pensé pour les campus africains, la data
-            chère et les nuits de révision.
+            révisables et disponibles hors connexion. Pensé pour les campus africains, la data chère
+            et les nuits de révision.
           </motion.p>
 
           <motion.div
@@ -124,10 +124,7 @@ export function Hero({
               { value: "1 000", label: "Places gratuites à vie" },
               { value: "< 4 Mo", label: "De data par heure de cours" },
             ].map((s) => (
-              <ImmersiveCard
-                key={s.label}
-                className="liquid-glass w-[210px] rounded-[1.25rem] p-5"
-              >
+              <ImmersiveCard key={s.label} className="liquid-glass w-[210px] rounded-[1.25rem] p-5">
                 <p className="text-display text-4xl leading-none">{s.value}</p>
                 <p className="mt-2 text-xs font-light text-foreground/80">{s.label}</p>
               </ImmersiveCard>

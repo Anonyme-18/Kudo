@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { Palette, RotateCcw, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -126,7 +128,6 @@ export function ThemePanel() {
                 </button>
               ))}
             </div>
-
 
             <div className="mt-4">
               <label className="text-xs tracking-widest text-muted-foreground uppercase">

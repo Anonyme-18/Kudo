@@ -8,10 +8,10 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 
 import { ImmersiveCard } from "@/components/ImmersiveCard";
 import { Button } from "@/components/ui/button";
-import { getRankedEntries, joinWaitlist, type RankedEntry } from "@/lib/actions";
+import { getRankedEntries, joinWaitlist, type PublicRankedEntry } from "@/lib/actions";
 import { POINTS_PER_REFERRAL, MAX_COUNTED_REFERRALS } from "@/lib/constants";
 
-export const Route = createFileRoute("/parrainage")({
+export const Route = createFileRoute()({
   head: () => ({
     meta: [
       { title: "Parrainage Kudo — Fais remonter ta place dans la file" },
@@ -23,7 +23,8 @@ export const Route = createFileRoute("/parrainage")({
       { property: "og:title", content: "Parrainage Kudo — Remonte la file d'attente" },
       {
         property: "og:description",
-        content: "10 points par filleul validé, jusqu'à 10 filleuls. Classement recalculé en direct.",
+        content:
+          "10 points par filleul validé, jusqu'à 10 filleuls. Classement recalculé en direct.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -33,10 +34,10 @@ export const Route = createFileRoute("/parrainage")({
 });
 
 export default function ParrainagePage() {
-  const [me, setMe] = useState<RankedEntry | null>(null);
+  const [me, setMe] = useState<PublicRankedEntry | null>(null);
   const [total, setTotal] = useState(0);
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,7 +47,7 @@ export default function ParrainagePage() {
     setTotal(data.length);
     const myCode = localStorage.getItem("kudo.waitlist.me");
     if (myCode) {
-      setMe(data.find(r => r.code === myCode) || null);
+      setMe(data.find((r) => r.code === myCode) || null);
     }
     setLoading(false);
   }, []);
@@ -63,8 +64,7 @@ export default function ParrainagePage() {
 
   const nextTarget = useMemo(() => {
     if (!me) return null;
-    const rows = rank(readAll());
-    return rows.find((r) => r.position === me.position - 1) ?? null;
+    return null;
   }, [me]);
 
   return (
@@ -155,9 +155,7 @@ export default function ParrainagePage() {
                 <div className="mt-6">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Progression vers le palier max</span>
-                    <span className="font-mono">
-                      {me.countedReferrals}/10
-                    </span>
+                    <span className="font-mono">{me.countedReferrals}/10</span>
                   </div>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
                     <motion.div
@@ -185,8 +183,8 @@ export default function ParrainagePage() {
                       Doubler la place #{me.position - 1}
                     </p>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      Invite tes camarades pour remonter dans la file. Chaque inscription validée avec ton lien est prise en
-                      compte immédiatement.
+                      Invite tes camarades pour remonter dans la file. Chaque inscription validée
+                      avec ton lien est prise en compte immédiatement.
                     </p>
                   </>
                 ) : (
@@ -208,8 +206,8 @@ export default function ParrainagePage() {
                     L'auto-parrainage est détecté et ignoré.
                   </li>
                   <li className="flex gap-3">
-                    <Trophy className="mt-0.5 size-4 shrink-0 text-primary" />
-                    À égalité de points, c'est l'ancienneté qui départage.
+                    <Trophy className="mt-0.5 size-4 shrink-0 text-primary" />À égalité de points,
+                    c'est l'ancienneté qui départage.
                   </li>
                 </ul>
               </div>
@@ -222,14 +220,15 @@ export default function ParrainagePage() {
               setJoining(true);
               setError(null);
               const refCode = new URLSearchParams(window.location.search).get("ref");
-              const res = await joinWaitlist(email, refCode);
-              if (res.success) {
+              try {
+                const res = await joinWaitlist(email, refCode);
                 localStorage.setItem("kudo.waitlist.me", res.code);
-                refresh();
-              } else {
-                setError("Erreur lors de l'inscription.");
+                await refresh();
+              } catch {
+                setError("Adresse email ou lien de parrainage invalide.");
+              } finally {
+                setJoining(false);
               }
-              setJoining(false);
             }}
             className="surface-card mt-10 flex max-w-xl flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
           >

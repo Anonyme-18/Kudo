@@ -7,9 +7,10 @@ import { ArrowLeft, Crown, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ImmersiveCard } from "@/components/ImmersiveCard";
-import { getRankedEntries, type RankedEntry } from "@/lib/actions";
+import { getRankedEntries, type PublicRankedEntry } from "@/lib/actions";
+import { MAX_COUNTED_REFERRALS, POINTS_PER_REFERRAL } from "@/lib/constants";
 
-export const Route = createFileRoute("/classement")({
+export const Route = createFileRoute()({
   head: () => ({
     meta: [
       { title: "Classement de la file d'attente Kudo" },
@@ -30,24 +31,18 @@ export const Route = createFileRoute("/classement")({
   component: ClassementPage,
 });
 
-function maskEmail(email: string) {
-  const [user = "", domain = ""] = email.split("@");
-  const head = user.slice(0, 2);
-  return `${head}${"•".repeat(Math.max(2, user.length - 2))}@${domain}`;
-}
-
 export default function ClassementPage() {
-  const [rows, setRows] = useState<RankedEntry[]>([]);
-  const [me, setMe] = useState<RankedEntry | null>(null);
+  const [rows, setRows] = useState<PublicRankedEntry[]>([]);
+  const [me, setMe] = useState<PublicRankedEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    getRankedEntries().then(data => {
+    getRankedEntries().then((data) => {
       setRows(data);
       const myCode = localStorage.getItem("kudo.waitlist.me");
       if (myCode) {
-        setMe(data.find(r => r.code === myCode) || null);
+        setMe(data.find((r) => r.code === myCode) || null);
       }
       setLoading(false);
     });
@@ -56,7 +51,9 @@ export default function ClassementPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) => r.email.includes(q) || r.code.toLowerCase().includes(q));
+    return rows.filter(
+      (r) => r.maskedEmail.toLowerCase().includes(q) || r.code.toLowerCase().includes(q),
+    );
   }, [rows, query]);
 
   const podium = rows.slice(0, 3);
@@ -107,7 +104,7 @@ export default function ClassementPage() {
                   <span className="text-display text-5xl">#{r.position}</span>
                   {i === 0 && <Crown className="size-5 text-primary" />}
                 </div>
-                <p className="mt-4 truncate text-sm">{maskEmail(r.email)}</p>
+                <p className="mt-4 truncate text-sm">{r.maskedEmail}</p>
                 <p className="mt-1 font-mono text-xs text-primary">
                   {r.points} pts · {r.referrals} filleul{r.referrals > 1 ? "s" : ""}
                 </p>
@@ -169,7 +166,7 @@ export default function ClassementPage() {
                   }`}
                 >
                   <td className="px-4 py-3 font-mono text-primary">{r.position}</td>
-                  <td className="px-4 py-3">{maskEmail(r.email)}</td>
+                  <td className="px-4 py-3">{r.maskedEmail}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.code}</td>
                   <td className="px-4 py-3 text-right">{r.referrals}</td>
                   <td className="px-4 py-3 text-right font-mono">{r.points}</td>

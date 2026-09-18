@@ -1,43 +1,56 @@
-# Kudo 🎓
+# Kudo
 
-Kudo est une plateforme de prise de notes intelligente, conçue spécifiquement pour répondre aux défis des étudiants sur les campus africains : connexions internet instables, coût élevé de la data, et besoin d'efficacité maximale lors des révisions.
+Kudo est une plateforme de prise de notes pensée pour les étudiants africains : transcription de cours, conversion de documents, mode hors connexion et consommation de données maîtrisée.
 
-## 🚀 Fonctionnalités clés
+## Stack
 
-- **Transcription Intelligente** : Enregistrez vos cours, obtenez des transcriptions structurées avec définitions et points clés, même dans un environnement bruyant.
-- **Conversion de documents** : Transformez vos photos de polycopiés ou scans de faible qualité en fiches de révision lisibles et structurées.
-- **Mode Hors-ligne (Offline First)** : L'application est pensée pour fonctionner sans connexion, avec une synchronisation automatique dès que le réseau est disponible.
-- **Optimisation Data** : Consommation ultra-faible (< 4 Mo/h), parfaitement adaptée aux forfaits limités.
+- Next.js 16 et React 19
+- TypeScript avec ESLint et Prettier
+- PostgreSQL/Neon avec Drizzle ORM
+- Tailwind CSS, Framer Motion et composants Radix UI
+- Déploiement recommandé : Vercel
 
-## 🛠️ Stack Technique
+## Développement local
 
-Ce projet utilise des technologies modernes pour garantir performance, type-safety et expérience développeur :
+Pré-requis : Node.js 20 ou supérieur et une base PostgreSQL (Neon convient très bien).
 
-- **Framework** : [Next.js](https://nextjs.org/) (App Router) pour le routage et le rendu optimisé.
-- **Routing** : [TanStack Router](https://tanstack.com/router/latest) pour une gestion de routage type-safe.
-- **Base de données** : [PostgreSQL](https://www.postgresql.org/) avec [Neon](https://neon.tech/) pour le stockage, via [Drizzle ORM](https://orm.drizzle.team/).
-- **Styling** : [Tailwind CSS v4](https://tailwindcss.com/) pour un design flexible et moderne.
-- **Animations** : [Framer Motion](https://www.framer.com/motion/) pour des interfaces fluides et immersives.
+```bash
+npm install
+Copy-Item .env.example .env.local
+```
 
-## 📦 Installation & Démarrage
+Renseignez ensuite `DATABASE_URL` et `ADMIN_PASSWORD` dans `.env.local`, puis créez la table :
 
-1. Clonez le dépôt et installez les dépendances :
-   ```bash
-   npm install
-   ```
-2. Configurez vos variables d'environnement (copiez `.env.example` en `.env.local`) :
-   ```bash
-   cp .env.example .env.local
-   ```
-   Remplissez les valeurs nécessaires :
-   - `DATABASE_URL` : Votre chaîne de connexion Neon PostgreSQL.
-   - `ADMIN_PASSWORD` : Le mot de passe sécurisé pour l'espace fondateur.
+```bash
+npm run db:generate
+npm run db:migrate
+npm run dev
+```
 
-3. Lancez le serveur de développement :
-   ```bash
-   npm run dev
-   ```
+Les contrôles qualité disponibles sont :
 
-## 🚀 Déploiement
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
 
-Le projet est configuré pour un déploiement fluide sur [Vercel](https://vercel.com/). Assurez-vous d'ajouter `DATABASE_URL` et `ADMIN_PASSWORD` dans les **Environment Variables** des paramètres de votre projet sur le tableau de bord Vercel avant le premier déploiement.
+## Déploiement Vercel
+
+1. Importez le dépôt GitHub dans Vercel.
+2. Ajoutez `DATABASE_URL` et `ADMIN_PASSWORD` dans les variables d’environnement Production, Preview et Development selon le besoin.
+3. Exécutez la migration Drizzle une fois contre la base de production (`npm run db:migrate`) avant la première utilisation.
+4. Lancez le déploiement avec la commande de build par défaut `npm run build`.
+
+`ADMIN_PASSWORD` doit être une valeur longue et aléatoire. Elle ne doit jamais être commitée, affichée dans le navigateur ou ajoutée à une variable `NEXT_PUBLIC_*`.
+
+## Fonctionnalités publiques
+
+- Inscription à la liste d’attente avec code de parrainage.
+- Classement recalculé côté serveur.
+- Adresses email masquées avant leur envoi au navigateur public.
+- Tableau de bord admin protégé par cookie HTTP-only signé côté serveur.
+
+## Données et sécurité
+
+Les emails sont des données personnelles : utilisez une base de production protégée, limitez les accès Neon et prévoyez une politique de conservation/suppression adaptée à votre lancement.

@@ -23,8 +23,8 @@ export function ImmersiveCard({ children, className, delay = 0 }: ImmersiveCardP
     const bounds = card.getBoundingClientRect();
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
-    const rx = ((y / bounds.height) - 0.5) * -7;
-    const ry = ((x / bounds.width) - 0.5) * 7;
+    const rx = (y / bounds.height - 0.5) * -7;
+    const ry = (x / bounds.width - 0.5) * 7;
 
     card.style.setProperty("--card-x", `${x}px`);
     card.style.setProperty("--card-y", `${y}px`);

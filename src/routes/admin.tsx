@@ -4,10 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Download, Lock, Loader2 } from "lucide-react";
-import { getRankedEntries, verifyAdmin, type RankedEntry } from "@/lib/actions";
-import { toCsv } from "@/lib/waitlist";
+import { getAdminRankedEntries, verifyAdmin, logoutAdmin, type RankedEntry } from "@/lib/actions";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute()({
   head: () => ({
     meta: [
       { title: "Espace fondateur — Kudo" },
@@ -36,10 +35,14 @@ export default function Admin() {
   useEffect(() => {
     if (authed) {
       setLoading(true);
-      getRankedEntries().then(data => {
-        setRows(data);
-        setLoading(false);
-      });
+      getAdminRankedEntries()
+        .then((data) => setRows(data))
+        .catch(() => {
+          sessionStorage.removeItem(SESSION_KEY);
+          setAuthed(false);
+          setError(true);
+        })
+        .finally(() => setLoading(false));
     }
   }, [authed]);
 
@@ -59,11 +62,15 @@ export default function Admin() {
           onSubmit={async (e) => {
             e.preventDefault();
             setLoading(true);
-            const isValid = await verifyAdmin(pwd);
-            if (isValid) {
-              sessionStorage.setItem(SESSION_KEY, "ok");
-              setAuthed(true);
-            } else {
+            try {
+              const isValid = await verifyAdmin(pwd);
+              if (isValid) {
+                sessionStorage.setItem(SESSION_KEY, "ok");
+                setAuthed(true);
+              } else {
+                setError(true);
+              }
+            } catch {
               setError(true);
             }
             setLoading(false);
@@ -94,7 +101,10 @@ export default function Admin() {
             {loading && <Loader2 className="size-4 animate-spin" />}
             Entrer
           </button>
-          <Link href="/" className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
+          <Link
+            href="/"
+            className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground"
+          >
             Retour à la landing
           </Link>
         </form>
@@ -103,9 +113,28 @@ export default function Admin() {
   }
 
   const exportCsv = () => {
-    // toCsv needs RankedEntry from lib/waitlist which has slight type difference (Date vs number), 
+    // toCsv needs RankedEntry from lib/waitlist which has slight type difference (Date vs number),
     // but the properties we use are compatible.
-    const blob = new Blob([toCsv(rows as any)], { type: "text/csv;charset=utf-8" });
+    const escapeCsv = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`;
+    const csv = [
+      ["position", "email", "code_parrainage", "parraine_par", "filleuls", "points", "date"]
+        .map(escapeCsv)
+        .join(","),
+      ...rows.map((r) =>
+        [
+          r.position,
+          r.email,
+          r.code,
+          r.referredBy ?? "",
+          r.referrals,
+          r.points,
+          r.joinedAt.toISOString(),
+        ]
+          .map(escapeCsv)
+          .join(","),
+      ),
+    ].join("\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -131,6 +160,7 @@ export default function Admin() {
           </button>
           <button
             onClick={() => {
+              void logoutAdmin();
               sessionStorage.removeItem(SESSION_KEY);
               setAuthed(false);
             }}
@@ -158,11 +188,13 @@ export default function Admin() {
         <table className="w-full text-left text-sm">
           <thead className="bg-card text-xs tracking-wider text-muted-foreground uppercase">
             <tr>
-              {["#", "Email", "Code", "Parrainé par", "Filleuls", "Points", "Inscrit le"].map((h) => (
-                <th key={h} className="px-4 py-3 font-medium whitespace-nowrap">
-                  {h}
-                </th>
-              ))}
+              {["#", "Email", "Code", "Parrainé par", "Filleuls", "Points", "Inscrit le"].map(
+                (h) => (
+                  <th key={h} className="px-4 py-3 font-medium whitespace-nowrap">
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -186,7 +218,7 @@ export default function Admin() {
       </div>
 
       <p className="mt-6 text-xs text-muted-foreground">
-        Données stockées localement dans le navigateur (démo sans backend). Export trié par position.
+        Données issues de PostgreSQL. Export trié par position.
       </p>
     </main>
   );

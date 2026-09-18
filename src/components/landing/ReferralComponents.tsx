@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Check, Copy, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImmersiveCard } from "@/components/ImmersiveCard";
-import { joinWaitlist, type RankedEntry } from "@/lib/actions";
+import { joinWaitlist, type PublicRankedEntry } from "@/lib/actions";
 
 export function ReferralDemo({ total }: { total: number }) {
   const [invites, setInvites] = useState(0);
@@ -37,7 +37,9 @@ export function ReferralDemo({ total }: { total: number }) {
             </AnimatePresence>
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {invites === 0 ? "Ajoute des camarades pour voir l’effet" : `${invites} invitation${invites > 1 ? "s" : ""} · +${invites * 10} pts`}
+            {invites === 0
+              ? "Ajoute des camarades pour voir l’effet"
+              : `${invites} invitation${invites > 1 ? "s" : ""} · +${invites * 10} pts`}
           </p>
         </div>
 
@@ -82,7 +84,7 @@ export function JoinForm({
   onJoin,
 }: {
   refCode?: string | undefined;
-  onJoin: (e: RankedEntry) => void;
+  onJoin: (e: PublicRankedEntry) => void;
 }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export function JoinForm({
         setLoading(false);
         // Note: For full fix, onJoin needs to handle database fetching logic
         // or trigger a full page refresh/data update
-        window.location.reload(); 
+        window.location.reload();
       }}
       className="surface-card flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
     >
@@ -124,14 +126,12 @@ export function JoinForm({
         {loading ? "Chargement..." : "Prendre ma place"}
         <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </button>
-      {error && (
-        <p className="px-4 pb-2 text-sm text-destructive sm:absolute sm:mt-24">{error}</p>
-      )}
+      {error && <p className="px-4 pb-2 text-sm text-destructive sm:absolute sm:mt-24">{error}</p>}
     </form>
   );
 }
 
-export function SpotCard({ entry }: { entry: RankedEntry }) {
+export function SpotCard({ entry }: { entry: PublicRankedEntry }) {
   const [copied, setCopied] = useState(false);
   const link = React.useMemo(() => {
     if (typeof window === "undefined") return `?ref=${entry.code}`;
@@ -158,8 +158,7 @@ export function SpotCard({ entry }: { entry: RankedEntry }) {
 
       <p className="mt-5 text-sm text-muted-foreground">
         Partage ton lien : chaque inscription validée te rapporte{" "}
-        <span className="text-foreground">10 points</span> et te fait remonter
-        la file.
+        <span className="text-foreground">10 points</span> et te fait remonter la file.
       </p>
 
       <div className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-background/40 p-2">
@@ -180,4 +179,4 @@ export function SpotCard({ entry }: { entry: RankedEntry }) {
     </div>
   );
 }
-import * as React from 'react';
+import * as React from "react";
